@@ -1,0 +1,6 @@
+bin/*
+!bin/.gitkeep
+includes/*
+!includes/.gitkeep
+lib/*
+!lib/.gitkeep
