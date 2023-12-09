@@ -17,6 +17,7 @@ CC?=clang
 MKDIR?=mkdir -p
 CP?=cp
 ECHO?=echo
+MAKE?=make
 
 CFLAGS?=-Wall -Wextra
 
@@ -33,6 +34,7 @@ SOURCE_DIR:=$(CURRENT_DIR)source$(/)
 SOURCE_BIN_DIR:=$(SOURCE_DIR)bin$(/)
 SOURCE_LIB_DIR:=$(SOURCE_DIR)lib$(/)
 GEN_DIR:=$(CURRENT_DIR)gen$(/)
+THIRDPARTY_DIR:=$(CURRENT_DIR)thirdparty$(/)
 DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)$(/)
 
 DEBUG_CFLAGS:=-O0 -g -DDEBUG
@@ -44,22 +46,33 @@ include_files:=$(wildcard $(INCLUDE_DIR)*.h)
 lib_object_files:= $(lib_source_files:$(SOURCE_LIB_DIR)%.c=$(GEN_DIR)%.o)
 bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%)
 lib_file:=$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).$(LIB_SUFFIX)
+thirdparty_makefiles:=$(wildcard $(THIRDPARTY_DIR)*$(/)Makefile)
 distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(DISTRIBUTED_INCLUDE_DIR)%.h)
 
 default: debug
 .PHONY: default
 
 release: CFLAGS+=$(RELEASE_CFLAGS)
-release: $(distributed_include_files) $(lib_file) $(bin_files)
+release: build_thirdparty_release $(distributed_include_files) $(lib_file) $(bin_files)
 .PHONY: release
 
 debug: CFLAGS+=$(DEBUG_CFLAGS)
-debug: $(distributed_include_files) $(lib_file) $(bin_files)
+debug: build_thirdparty_debug $(distributed_include_files) $(lib_file) $(bin_files)
 .PHONY: debug
 
-clean:
-	@$(ECHO) "Remove generated files"
-	@$(RM) $(lib_object_files) $(bin_files) $(lib_file)
+build_thirdparty_release:
+	$(foreach makefile, $(thirdparty_makefiles), $(MAKE) -f $(makefile) release;)
+.PHONY: build_thirdparty
+
+build_thirdparty_debug:
+	$(foreach makefile, $(thirdparty_makefiles), $(MAKE) -f $(makefile) debug;)
+.PHONY: build_thirdparty
+
+clean_thirdparty:
+	$(foreach makefile, $(thirdparty_makefiles), $(MAKE) -f $(makefile) clean;)
+
+clean: clean_thirdparty
+	$(RM) $(lib_object_files) $(bin_files) $(lib_file) $(distributed_include_files)
 .PHONY: debug
 
 $(DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
