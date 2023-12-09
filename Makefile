@@ -1,4 +1,4 @@
-# --- CRAB MAKEFILE ---
+# --- CUBE MAKEFILE ---
 # Zero-configuration modular makefile.
 # Library, binary & header files are exported to the root project.
 
@@ -34,7 +34,7 @@ SOURCE_DIR:=$(CURRENT_DIR)source$(/)
 SOURCE_BIN_DIR:=$(SOURCE_DIR)bin$(/)
 SOURCE_LIB_DIR:=$(SOURCE_DIR)lib$(/)
 GEN_DIR:=$(CURRENT_DIR)gen$(/)
-THIRDPARTY_DIR:=$(CURRENT_DIR)thirdparty$(/)
+CUBE_DIR:=$(CURRENT_DIR)cube$(/)
 DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)$(/)
 
 DEBUG_CFLAGS:=-O0 -g -DDEBUG
@@ -46,32 +46,32 @@ include_files:=$(wildcard $(INCLUDE_DIR)*.h)
 lib_object_files:= $(lib_source_files:$(SOURCE_LIB_DIR)%.c=$(GEN_DIR)%.o)
 bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%)
 lib_file:=$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).$(LIB_SUFFIX)
-thirdparty_makefiles:=$(wildcard $(THIRDPARTY_DIR)*$(/)Makefile)
+cube_makefiles:=$(wildcard $(CUBE_DIR)*$(/)Makefile)
 distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(DISTRIBUTED_INCLUDE_DIR)%.h)
 
 default: debug
 .PHONY: default
 
 release: CFLAGS+=$(RELEASE_CFLAGS)
-release: build_thirdparty_release $(distributed_include_files) $(lib_file) $(bin_files)
+release: build_cube_release $(distributed_include_files) $(lib_file) $(bin_files)
 .PHONY: release
 
 debug: CFLAGS+=$(DEBUG_CFLAGS)
-debug: build_thirdparty_debug $(distributed_include_files) $(lib_file) $(bin_files)
+debug: build_cube_debug $(distributed_include_files) $(lib_file) $(bin_files)
 .PHONY: debug
 
-build_thirdparty_release:
-	$(foreach makefile, $(thirdparty_makefiles), $(MAKE) -f $(makefile) release;)
-.PHONY: build_thirdparty
+build_cube_release:
+	$(foreach makefile, $(cube_makefiles), $(MAKE) -f $(makefile) release;)
+.PHONY: build_cube
 
-build_thirdparty_debug:
-	$(foreach makefile, $(thirdparty_makefiles), $(MAKE) -f $(makefile) debug;)
-.PHONY: build_thirdparty
+build_cube_debug:
+	$(foreach makefile, $(cube_makefiles), $(MAKE) -f $(makefile) debug;)
+.PHONY: build_cube
 
-clean_thirdparty:
-	$(foreach makefile, $(thirdparty_makefiles), $(MAKE) -f $(makefile) clean;)
+clean_cube:
+	$(foreach makefile, $(cube_makefiles), $(MAKE) -f $(makefile) clean;)
 
-clean: clean_thirdparty
+clean: clean_cube
 	$(RM) $(lib_object_files) $(bin_files) $(lib_file) $(distributed_include_files)
 .PHONY: debug
 
