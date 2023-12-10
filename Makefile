@@ -20,6 +20,7 @@ ECHO:=echo
 MAKE:=make
 CAT:=cat
 RM:=rm -rf
+GIT:=git
 
 export ROOT_DIR?=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 export ROOT_BUILD_DIR?=$(ROOT_DIR)build$(/)
@@ -28,7 +29,7 @@ export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include$(/)
 export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib$(/)
 export ROOT_DEPENDENCIES_FILE?=$(ROOT_BUILD_LIB_DIR)DEPENDENCIES
 
-VERSION:=$(shell git name-rev --tags --name-only --always --no-undefined $(shell git rev-parse HEAD))
+VERSION:=$(shell $(GIT) name-rev --tags --name-only --always --no-undefined $(shell $(GIT) rev-parse HEAD))
 
 CURRENT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 PROJECT_NAME:=$(lastword $(subst $(/), ,$(CURRENT_DIR)))
