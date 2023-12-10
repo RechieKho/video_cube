@@ -60,6 +60,7 @@ It should:
 
 There will be two build, `release` build and `debug` build.
 The `Cube` makefile should have the `release` phony target and the `debug` phony target for the build.
+A macro `DEBUG` is defined when compiling in `debug` build, while a macro `RELEASE` is defined when compiling in `release` build.
 
 ### Outputing distributed files
 
@@ -101,6 +102,7 @@ Since itself is not really a `Cube` project so handling thirdparty `Cube` projec
 
 The version of the library is the `git` hash or tag (if available) of the current commit.
 It is incorporated into the distributed files' name (as stated in the [`Cube` project structure](#cube-project-structure)).
+A macro `VERSION` is also defined when compiling.
 Unfortunately, the symbols of the library do not automatically incorporate the version.
 Given this dependency tree:
 
