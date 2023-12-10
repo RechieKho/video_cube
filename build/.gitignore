@@ -1,6 +1,6 @@
 bin/*
 !bin/.gitkeep
-includes/*
-!includes/.gitkeep
+include/*
+!include/.gitkeep
 lib/*
 !lib/.gitkeep

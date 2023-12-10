@@ -24,7 +24,7 @@ CFLAGS?=-Wall -Wextra
 export ROOT_DIR?=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 export ROOT_BUILD_DIR?=$(ROOT_DIR)build$(/)
 export ROOT_BUILD_BIN_DIR?=$(ROOT_BUILD_DIR)bin$(/)
-export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)includes$(/)
+export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include$(/)
 export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib$(/)
 
 CURRENT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
