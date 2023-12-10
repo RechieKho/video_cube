@@ -79,6 +79,7 @@ The `Cube` makefile should have a `clean` phony target that delete the file gene
 ### Compile thirdparty `Cube` projects
 
 The `Cube` makefile should call `make` for building or cleaning on the thirdparty `Cube` projects living in the `cube` directory before building or cleaning itself.
+Thus, the `Cube` makefile should have the `build-cube-release` phony target and the `build-cube-debug` phony target for the build, and it should be called before compiling self.
 
 ## `Cube` porting makefile
 
