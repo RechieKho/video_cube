@@ -62,10 +62,12 @@ default: debug
 
 release: CFLAGS+=$(RELEASE_CFLAGS)
 release: build_cube_release $(distributed_include_files) $(lib_file) $(bin_files)
+	@$(RM) $(ROOT_DEPENDENCIES_FILE)
 .PHONY: release
 
 debug: CFLAGS+=$(DEBUG_CFLAGS)
 debug: build_cube_debug $(distributed_include_files) $(lib_file) $(bin_files)
+	@$(RM) $(ROOT_DEPENDENCIES_FILE)
 .PHONY: debug
 
 build_cube_release:
