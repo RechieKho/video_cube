@@ -14,15 +14,17 @@ What it is:
 Basic Unix-like environment with basic C tools installed.
 These are the application required:
 
-- ar
-- clang
-- mkdir
-- cp
-- echo
-- make
-- cat
-- rm
-- git
+- `ar`
+- `clang`
+- `mkdir`
+- `cp`
+- `echo`
+- `make`
+- `cat`
+- `rm`
+- `git`
+
+`Cube` projects must be a `git` repository.
 
 ## `Cube` project structure
 
