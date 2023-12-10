@@ -44,7 +44,7 @@ These are the application required:
 > [!NOTE]
 >
 > Project name (`<PROJECT_NAME>`) is the name of the directory your project resided.
-> Version (`<VERSION>`) is the git hash or tag (if available).
+> Version (`<VERSION>`) is the `git` hash or tag (if available).
 
 ## `Cube` makefile
 
@@ -99,7 +99,7 @@ Since itself is not really a `Cube` project so handling thirdparty `Cube` projec
 
 ## Versioning
 
-The version of the library is the git hash or tag (if available) of the current commit.
+The version of the library is the `git` hash or tag (if available) of the current commit.
 It is incorporated into the distributed files' name (as stated in the [`Cube` project structure](#cube-project-structure)).
 Unfortunately, the symbols of the library do not automatically incorporate the version.
 Given this dependency tree:
