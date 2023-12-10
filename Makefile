@@ -19,13 +19,13 @@ CP?=cp
 ECHO?=echo
 MAKE?=make
 
-CFLAGS?=-Wall -Wextra
-
 export ROOT_DIR?=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 export ROOT_BUILD_DIR?=$(ROOT_DIR)build$(/)
 export ROOT_BUILD_BIN_DIR?=$(ROOT_BUILD_DIR)bin$(/)
 export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include$(/)
 export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib$(/)
+
+VERSION:=$(shell git name-rev --tags --name-only --always --no-undefined $(shell git rev-parse HEAD))
 
 CURRENT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 PROJECT_NAME:=$(lastword $(subst $(/), ,$(CURRENT_DIR)))
@@ -35,18 +35,20 @@ SOURCE_BIN_DIR:=$(SOURCE_DIR)bin$(/)
 SOURCE_LIB_DIR:=$(SOURCE_DIR)lib$(/)
 GEN_DIR:=$(CURRENT_DIR)gen$(/)
 CUBE_DIR:=$(CURRENT_DIR)cube$(/)
-DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)$(/)
+DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)$(/)$(VERSION)$(/)
 
-DEBUG_CFLAGS:=-O0 -g -DDEBUG
-RELEASE_CFLAGS:=-02 -DRELEASE
+override CFLAGS+=-Wall -Wextra
+override DEFINES+=VERSION=$(VERSION)
+override DEBUG_CFLAGS+=-O0 -g -DDEBUG
+override RELEASE_CFLAGS+=-02 -DRELEASE
 
 lib_source_files:=$(wildcard $(SOURCE_LIB_DIR)*.c)
 bin_sources_files=$(wildcard $(SOURCE_BIN_DIR)*.c)
 include_files:=$(wildcard $(INCLUDE_DIR)*.h)
 lib_object_files:= $(lib_source_files:$(SOURCE_LIB_DIR)%.c=$(GEN_DIR)%.o)
 cube_makefiles:=$(wildcard $(CUBE_DIR)*$(/)Makefile)
-bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%)
-lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).$(LIB_SUFFIX))
+bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%.${VERSION})
+lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).${VERSION}.$(LIB_SUFFIX))
 distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(DISTRIBUTED_INCLUDE_DIR)%.h)
 
 default: debug
@@ -80,11 +82,11 @@ $(DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
 	@$(MKDIR) $(DISTRIBUTED_INCLUDE_DIR)
 	@$(CP) $< $@
 
-$(ROOT_BUILD_BIN_DIR)%: $(SOURCE_BIN_DIR)%.c $(lib_file) $(distributed_include_files)
-	$(CC) $(CFLAGS) $< $(wildcard $(ROOT_BUILD_LIB_DIR)lib*.$(LIB_SUFFIX)) -o $@ -I$(ROOT_BUILD_INCLUDE_DIR)
+$(ROOT_BUILD_BIN_DIR)%.$(VERSION): $(SOURCE_BIN_DIR)%.c $(lib_file) $(distributed_include_files)
+	$(CC) $(CFLAGS) $(DEFINES:%=-D%) $< $(wildcard $(ROOT_BUILD_LIB_DIR)lib*.$(LIB_SUFFIX)) -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR)
 
 $(lib_file): $(lib_object_files)
 	$(AR) rcs $@ $^
 
 $(GEN_DIR)%.o: $(SOURCE_LIB_DIR)%.c $(distributed_include_files)
-	$(CC) $(CFLAGS) -c $< -o $@ -I$(ROOT_BUILD_INCLUDE_DIR)
+	$(CC) $(CFLAGS) $(DEFINES:%=-D%) -c $< -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR)
