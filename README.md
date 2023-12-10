@@ -40,6 +40,7 @@ These are the application required:
 | `source/lib`    | Stores source files that will be build into a static library, output to `build/lib`.                                                                                                                                  |
 
 > Note:
+>
 > Project name (`<PROJECT_NAME>`) is the name of the directory your project resided.
 > Version (`<VERSION>`) is the git hash or tag (if available).
 > Library suffix (`<LIB_SUFFIX>`) is the suffix of static library name depending on operating system (e.g. `.a` on Unix-like).
