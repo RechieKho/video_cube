@@ -12,24 +12,24 @@ CAT:=cat
 RM:=rm -rf
 GIT:=git
 
-export ROOT_DIR?=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+VERSION:=$(shell $(GIT) name-rev --tags --name-only --always --no-undefined $(shell $(GIT) rev-parse HEAD))
+CURRENT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+PROJECT_NAME:=$(lastword $(subst /, ,$(CURRENT_DIR)))
+
+export ROOT_DIR?=$(CURRENT_DIR)
 export ROOT_BUILD_DIR?=$(ROOT_DIR)build/
 export ROOT_BUILD_BIN_DIR?=$(ROOT_BUILD_DIR)bin/
 export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include/
 export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib/
-export ROOT_DEPENDENCIES_FILE?=$(ROOT_BUILD_LIB_DIR)DEPENDENCIES
+export ROOT_DEPENDENCIES_FILE?=$(ROOT_BUILD_LIB_DIR)$(PROJECT_NAME).$(VERSION).DEPENDENCIES
 
-VERSION:=$(shell $(GIT) name-rev --tags --name-only --always --no-undefined $(shell $(GIT) rev-parse HEAD))
-
-CURRENT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
-PROJECT_NAME:=$(lastword $(subst /, ,$(CURRENT_DIR)))
 INCLUDE_DIR:=$(CURRENT_DIR)include/
 SOURCE_DIR:=$(CURRENT_DIR)source/
 SOURCE_BIN_DIR:=$(SOURCE_DIR)bin/
 SOURCE_LIB_DIR:=$(SOURCE_DIR)lib/
 GEN_DIR:=$(CURRENT_DIR)gen/
 CUBE_DIR:=$(CURRENT_DIR)cube/
-DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)/$(VERSION)$(/)
+DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)/$(VERSION)/
 
 override CFLAGS+=-Wall -Wextra
 override DEFINES+=VERSION=$(VERSION)
@@ -52,43 +52,47 @@ default: debug
 
 release: CFLAGS+=$(RELEASE_CFLAGS)
 release: build_cube_release $(distributed_include_files) $(lib_file) $(bin_files)
-	@$(RM) $(ROOT_DEPENDENCIES_FILE)
 .PHONY: release
 
 debug: CFLAGS+=$(DEBUG_CFLAGS)
 debug: build_cube_debug $(distributed_include_files) $(lib_file) $(bin_files)
-	@$(RM) $(ROOT_DEPENDENCIES_FILE)
 .PHONY: debug
 
 build_cube_release:
 	$(foreach makefile, $(cube_makefiles), $(MAKE) -f $(makefile) release;)
-.PHONY: build_cube
+.PHONY: build_cube_release
+.NOTPARALLEL: build_cube_release
 
 build_cube_debug:
 	$(foreach makefile, $(cube_makefiles), $(MAKE) -f $(makefile) debug;)
-.PHONY: build_cube
+.PHONY: build_cube_debug
+.NOTPARALLEL: build_cube_debug
 
 clean_cube:
 	$(foreach makefile, $(cube_makefiles), $(MAKE) -f $(makefile) clean;)
+.PHONY: clean_cube
 
 clean: clean_cube
 	$(RM) $(lib_object_files)
 ifeq ($(ROOT_DIR),$(CURRENT_DIR))
 	$(RM) $(ROOT_BUILD_INCLUDE_DIR)* $(ROOT_BUILD_BIN_DIR)* $(ROOT_BUILD_LIB_DIR)*
 endif
-.PHONY: debug
+.PHONY: clean
 
 $(DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
 	@$(ECHO) "Export $@"
 	@$(MKDIR) $(DISTRIBUTED_INCLUDE_DIR)
 	@$(CP) $< $@
 
-$(ROOT_BUILD_BIN_DIR)%.$(VERSION): $(SOURCE_BIN_DIR)%.c $(lib_file) $(distributed_include_files)
+$(ROOT_BUILD_BIN_DIR)%.$(VERSION): $(SOURCE_BIN_DIR)%.c $(lib_file) $(distributed_include_files) $(ROOT_DEPENDENCIES_FILE)
 	$(CC) $(CFLAGS) $(DEFINES:%=-D%) $< $(call reverse,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))) -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR)
 
-$(lib_file): $(lib_object_files)
-	$(AR) rcs $@ $^
-	@$(ECHO) "$@" >> $(ROOT_DEPENDENCIES_FILE)
+$(lib_file): $(lib_object_files) $(ROOT_DEPENDENCIES_FILE)
+	$(AR) rcs $@ $(filter-out $(ROOT_DEPENDENCIES_FILE),$^)
+	$(if $(findstring $@,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))),,@$(ECHO) "$@" >> $(ROOT_DEPENDENCIES_FILE))
 
 $(GEN_DIR)%.o: $(SOURCE_LIB_DIR)%.c $(distributed_include_files)
 	$(CC) $(CFLAGS) $(DEFINES:%=-D%) -c $< -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR)
+
+$(ROOT_DEPENDENCIES_FILE):
+	@$(ECHO) "" > $(ROOT_DEPENDENCIES_FILE)
