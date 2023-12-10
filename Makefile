@@ -2,14 +2,6 @@
 # Zero-configuration modular makefile.
 # Library, binary & header files are exported to the root project.
 
-ifdef OS 
-	# Windows
-	/:=\\
-else 
-	# Unix-like
-	/:=/
-endif
-
 AR:=ar
 CC:=clang
 MKDIR:=mkdir -p
@@ -21,23 +13,23 @@ RM:=rm -rf
 GIT:=git
 
 export ROOT_DIR?=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
-export ROOT_BUILD_DIR?=$(ROOT_DIR)build$(/)
-export ROOT_BUILD_BIN_DIR?=$(ROOT_BUILD_DIR)bin$(/)
-export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include$(/)
-export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib$(/)
+export ROOT_BUILD_DIR?=$(ROOT_DIR)build/
+export ROOT_BUILD_BIN_DIR?=$(ROOT_BUILD_DIR)bin/
+export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include/
+export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib/
 export ROOT_DEPENDENCIES_FILE?=$(ROOT_BUILD_LIB_DIR)DEPENDENCIES
 
 VERSION:=$(shell $(GIT) name-rev --tags --name-only --always --no-undefined $(shell $(GIT) rev-parse HEAD))
 
 CURRENT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
-PROJECT_NAME:=$(lastword $(subst $(/), ,$(CURRENT_DIR)))
-INCLUDE_DIR:=$(CURRENT_DIR)include$(/)
-SOURCE_DIR:=$(CURRENT_DIR)source$(/)
-SOURCE_BIN_DIR:=$(SOURCE_DIR)bin$(/)
-SOURCE_LIB_DIR:=$(SOURCE_DIR)lib$(/)
-GEN_DIR:=$(CURRENT_DIR)gen$(/)
-CUBE_DIR:=$(CURRENT_DIR)cube$(/)
-DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)$(/)$(VERSION)$(/)
+PROJECT_NAME:=$(lastword $(subst /, ,$(CURRENT_DIR)))
+INCLUDE_DIR:=$(CURRENT_DIR)include/
+SOURCE_DIR:=$(CURRENT_DIR)source/
+SOURCE_BIN_DIR:=$(SOURCE_DIR)bin/
+SOURCE_LIB_DIR:=$(SOURCE_DIR)lib/
+GEN_DIR:=$(CURRENT_DIR)gen/
+CUBE_DIR:=$(CURRENT_DIR)cube/
+DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)/$(VERSION)$(/)
 
 override CFLAGS+=-Wall -Wextra
 override DEFINES+=VERSION=$(VERSION)
@@ -48,7 +40,7 @@ lib_source_files:=$(wildcard $(SOURCE_LIB_DIR)*.c)
 bin_sources_files=$(wildcard $(SOURCE_BIN_DIR)*.c)
 include_files:=$(wildcard $(INCLUDE_DIR)*.h)
 lib_object_files:= $(lib_source_files:$(SOURCE_LIB_DIR)%.c=$(GEN_DIR)%.o)
-cube_makefiles:=$(wildcard $(CUBE_DIR)*$(/)Makefile)
+cube_makefiles:=$(wildcard $(CUBE_DIR)*/Makefile)
 bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%.${VERSION})
 lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).${VERSION}.a)
 distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(DISTRIBUTED_INCLUDE_DIR)%.h)
