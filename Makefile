@@ -5,11 +5,9 @@
 ifdef OS 
 	# Windows
 	/:=\\
-	LIB_SUFFIX:=lib
 else 
 	# Unix-like
 	/:=/
-	LIB_SUFFIX:=a
 endif
 
 AR:=ar
@@ -52,7 +50,7 @@ include_files:=$(wildcard $(INCLUDE_DIR)*.h)
 lib_object_files:= $(lib_source_files:$(SOURCE_LIB_DIR)%.c=$(GEN_DIR)%.o)
 cube_makefiles:=$(wildcard $(CUBE_DIR)*$(/)Makefile)
 bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%.${VERSION})
-lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).${VERSION}.$(LIB_SUFFIX))
+lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).${VERSION}.a)
 distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(DISTRIBUTED_INCLUDE_DIR)%.h)
 
 reverse=$(if $(1),$(call reverse,$(wordlist 2,$(words $(1)),$(1)))) $(firstword $(1))

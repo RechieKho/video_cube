@@ -31,7 +31,7 @@ These are the application required:
 | `build`         | Store distributable files of the project and its thirdparty `Cube` projects.                                                                                                                                          |
 | `build/bin`     | Stores built binary of the project and its thirdparty `Cube` projects. The binary has version as suffix (`<BIN_NAME>.<VERSION>`).                                                                                     |
 | `build/include` | Stores header files of the project and its thirdparty `Cube` projects. The header files is stored in their own directory with its project's name and version as the name (`build/include/<PROJECT_NAME>/<VERSION>/`). |
-| `build/lib`     | Stores built binary with the file with the naming format as `lib<PROJECT_NAME>.<VERSION>.<LIB_SUFFIX>`.                                                                                                               |
+| `build/lib`     | Stores built binary with the file with the naming format as `lib<PROJECT_NAME>.<VERSION>.a`.                                                                                                                          |
 | `cube`          | Stores all the thirdparty `Cube` projects. It is handled by the `Cube` makefile.                                                                                                                                      |
 | `gen`           | Stores the generated object files of the project.                                                                                                                                                                     |
 | `include`       | Stores the header files to be distributed, it will be copied to the `build/include` directory.                                                                                                                        |
@@ -43,7 +43,6 @@ These are the application required:
 >
 > Project name (`<PROJECT_NAME>`) is the name of the directory your project resided.
 > Version (`<VERSION>`) is the git hash or tag (if available).
-> Library suffix (`<LIB_SUFFIX>`) is the suffix of static library name depending on operating system (e.g. `.a` on Unix-like).
 
 ## `Cube` makefile
 
