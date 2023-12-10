@@ -116,7 +116,7 @@ parent
 Both `child_b v1_0_9` and `child_b v1_0_1` will output their own static library to the root `build` directory (the `parent`'s `build` directory).
 Assuming both have the function `foo(int, int)`, it would have a linker duplicate symbol error when linking both library together.
 
-To fix this issue, the programmer should consider the version when defining the function.
+To fix this issue, the programmer should consider the version when naming the function.
 
 ```c
 #define APPEND_VERSION(identifier) identifier##VERSION
