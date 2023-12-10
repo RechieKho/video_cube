@@ -66,9 +66,11 @@ These are the important makefile variables:
 - `ROOT_BUILD_BIN_DIR` - Path of the root `build/bin` directory.
 - `ROOT_BUILD_INCLUDE_DIR` - Path of the root `build/include` directory.
 - `ROOT_BUILD_LIB_DIR` - Path of the root `build/lib` directory.
+- `ROOT_DEPENDENCIES_FILE` - Path of a text file recording library compiled.
 
 The parent `Cube` projects should defined these variables.
 For the thirdparty `Cube` projects, the root `build` directory is passed to the makefile from the parent `Cube` projects with `export`.
+The `Cube` makefile should record the library compiled to `ROOT_DEPENDENCIES_FILE` in order to record the sequence of the dependencies.
 
 ### Clean the build
 
