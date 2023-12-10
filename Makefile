@@ -12,18 +12,21 @@ else
 	LIB_SUFFIX:=a
 endif
 
-AR?=ar
-CC?=clang
-MKDIR?=mkdir -p
-CP?=cp
-ECHO?=echo
-MAKE?=make
+AR:=ar
+CC:=clang
+MKDIR:=mkdir -p
+CP:=cp
+ECHO:=echo
+MAKE:=make
+CAT:=cat
+RM:=rm -rf
 
 export ROOT_DIR?=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 export ROOT_BUILD_DIR?=$(ROOT_DIR)build$(/)
 export ROOT_BUILD_BIN_DIR?=$(ROOT_BUILD_DIR)bin$(/)
 export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include$(/)
 export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib$(/)
+export ROOT_DEPENDENCIES_FILE?=$(ROOT_BUILD_LIB_DIR)DEPENDENCIES
 
 VERSION:=$(shell git name-rev --tags --name-only --always --no-undefined $(shell git rev-parse HEAD))
 
@@ -51,6 +54,8 @@ bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%.${VER
 lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).${VERSION}.$(LIB_SUFFIX))
 distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(DISTRIBUTED_INCLUDE_DIR)%.h)
 
+reverse=$(if $(1),$(call reverse,$(wordlist 2,$(words $(1)),$(1)))) $(firstword $(1))
+
 default: debug
 .PHONY: default
 
@@ -74,7 +79,10 @@ clean_cube:
 	$(foreach makefile, $(cube_makefiles), $(MAKE) -f $(makefile) clean;)
 
 clean: clean_cube
-	$(RM) $(lib_object_files) $(distributed_include_files) $(bin_files) $(lib_file)
+	$(RM) $(lib_object_files)
+ifeq ($(ROOT_DIR),$(CURRENT_DIR))
+	$(RM) $(ROOT_BUILD_INCLUDE_DIR)* $(ROOT_BUILD_BIN_DIR)* $(ROOT_BUILD_LIB_DIR)*
+endif
 .PHONY: debug
 
 $(DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
@@ -83,10 +91,11 @@ $(DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
 	@$(CP) $< $@
 
 $(ROOT_BUILD_BIN_DIR)%.$(VERSION): $(SOURCE_BIN_DIR)%.c $(lib_file) $(distributed_include_files)
-	$(CC) $(CFLAGS) $(DEFINES:%=-D%) $< $(wildcard $(ROOT_BUILD_LIB_DIR)lib*.$(LIB_SUFFIX)) -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR)
+	$(CC) $(CFLAGS) $(DEFINES:%=-D%) $< $(call reverse,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))) -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR)
 
 $(lib_file): $(lib_object_files)
 	$(AR) rcs $@ $^
+	@$(ECHO) "$@" >> $(ROOT_DEPENDENCIES_FILE)
 
 $(GEN_DIR)%.o: $(SOURCE_LIB_DIR)%.c $(distributed_include_files)
 	$(CC) $(CFLAGS) $(DEFINES:%=-D%) -c $< -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR)
