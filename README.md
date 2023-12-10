@@ -39,7 +39,7 @@ These are the application required:
 | `source/bin`    | Stores source files that will be build into executables. Each source file compiles to an executable with the same name and output to `build/bin`. The executable is linked to library in `build/lib`.                 |
 | `source/lib`    | Stores source files that will be build into a static library, output to `build/lib`.                                                                                                                                  |
 
-> Note:
+> [!NOTE]
 >
 > Project name (`<PROJECT_NAME>`) is the name of the directory your project resided.
 > Version (`<VERSION>`) is the git hash or tag (if available).
