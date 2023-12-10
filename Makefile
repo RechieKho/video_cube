@@ -44,9 +44,9 @@ lib_source_files:=$(wildcard $(SOURCE_LIB_DIR)*.c)
 bin_sources_files=$(wildcard $(SOURCE_BIN_DIR)*.c)
 include_files:=$(wildcard $(INCLUDE_DIR)*.h)
 lib_object_files:= $(lib_source_files:$(SOURCE_LIB_DIR)%.c=$(GEN_DIR)%.o)
-bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%)
-lib_file:=$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).$(LIB_SUFFIX)
 cube_makefiles:=$(wildcard $(CUBE_DIR)*$(/)Makefile)
+bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%)
+lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).$(LIB_SUFFIX))
 distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(DISTRIBUTED_INCLUDE_DIR)%.h)
 
 default: debug
@@ -72,7 +72,7 @@ clean_cube:
 	$(foreach makefile, $(cube_makefiles), $(MAKE) -f $(makefile) clean;)
 
 clean: clean_cube
-	$(RM) $(lib_object_files) $(bin_files) $(lib_file) $(distributed_include_files)
+	$(RM) $(lib_object_files) $(distributed_include_files) $(bin_files) $(lib_file)
 .PHONY: debug
 
 $(DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
