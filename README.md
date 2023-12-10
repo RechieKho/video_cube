@@ -69,4 +69,4 @@ Since itself is not really a `Cube` project so handling thirdparty `Cube` projec
 
 ## Cross-compiling
 
-Since it is all makefiles, it captures from the environment variables. Cross-compiling isn't in the job scope of the `Cube` makefile, the programmer should install the appropriate build tools and setup the environment variables for cross-compiling.
+Since it is all makefiles, it captures from the environment variables. Cross-compiling isn't in the job scope of the `Cube` makefile, the programmer should install the appropriate tools and setup the environment variables for cross-compiling.
