@@ -9,6 +9,21 @@ What it is:
 - Include other `Cube` projects as thirdparties with 0 configuration.
 - Focus on modularity.
 
+## Prerequisite
+
+Basic Unix-like environment with basic C tools installed.
+These are the application required:
+
+- ar
+- clang
+- mkdir
+- cp
+- echo
+- make
+- cat
+- rm
+- git
+
 ## `Cube` project structure
 
 | Directory       | Description                                                                                                                                                                                                           |
