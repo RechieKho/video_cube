@@ -122,10 +122,12 @@ To fix this issue, the programmer should consider the version when naming the fu
 A macro `VERSION` is also defined when compiling, the programmer could utilize this macro to differentiate function of different version.
 
 ```c
-#define APPEND_VERSION(identifier) identifier##VERSION
+#define LITERAL_CONCAT(x, y) x ## y
+#define CONCAT(x, y) LITERAL_CONCAT(x, y)
+#define AFFIX_VERSION(identifier) CONCAT(identifier, VERSION)
 
-int APPEND_VERSION(foo)(int a, int b);
-#define foo(a, b) (APPEND_VERSION(identifier)(a, b))
+int AFFIX_VERSION(foo)(int a, int b);
+#define foo(a, b) (AFFIX_VERSION(foo)(a, b))
 
 ```
 
