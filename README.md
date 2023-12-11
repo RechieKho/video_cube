@@ -77,7 +77,7 @@ The root `Cube` project should be the one to clean up the root `build` directory
 
 The `Cube` Makefile should clean the thirdparty `Cube` projects before cleaning itself.
 
-## Signal the thirdparty `Cube` projects
+### Signal the thirdparty `Cube` projects
 
 The `Cube` Makefile should have these phony targets:
 
