@@ -23,6 +23,7 @@ These are the application required:
 - `cat`
 - `rm`
 - `git`
+- `cd`
 
 `Cube` projects must be a `git` repository.
 

@@ -11,9 +11,10 @@ MAKE:=make
 CAT:=cat
 RM:=rm -rf
 GIT:=git
+CD:=cd
 
-VERSION:=$(shell $(GIT) name-rev --tags --name-only --always --no-undefined $(shell $(GIT) rev-parse HEAD))
 CURRENT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+VERSION:=$(shell $(CD) $(CURRENT_DIR) && $(GIT) name-rev --tags --name-only --always --no-undefined $(shell $(GIT) rev-parse HEAD))
 PROJECT_NAME:=$(lastword $(subst /, ,$(CURRENT_DIR)))
 
 export ROOT_DIR?=$(CURRENT_DIR)
