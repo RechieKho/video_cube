@@ -5,7 +5,8 @@ in which `Cube` project could easily embedded into other `Cube` projects with 0 
 
 What it is:
 
-- Building desktop application (Windows, Linux and Mac OS) and static library on a unix-like environment.
+- Building desktop application and static library on a unix-like environment.
+- Targeting Windows, Linux and Mac OS.
 - Include other `Cube` projects as thirdparties with 0 configuration.
 - Focus on modularity.
 
