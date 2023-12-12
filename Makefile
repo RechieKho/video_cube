@@ -51,6 +51,7 @@ export ROOT_BUILD_BIN_DIR?=$(ROOT_BUILD_DIR)bin/
 export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include/
 export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib/
 export ROOT_DEPENDENCIES_FILE?=$(ROOT_BUILD_LIB_DIR)$(PROJECT_NAME).$(VERSION).DEPENDENCIES
+export ROOT_LINK_FILE?=$(ROOT_BUILD_LIB_DIR)$(PROJECT_NAME).$(VERSION).LINK
 
 INCLUDE_DIR:=$(CURRENT_DIR)include/
 SOURCE_DIR:=$(CURRENT_DIR)source/
@@ -58,6 +59,7 @@ SOURCE_BIN_DIR:=$(SOURCE_DIR)bin/
 SOURCE_LIB_DIR:=$(SOURCE_DIR)lib/
 GEN_DIR:=$(CURRENT_DIR)gen/
 CUBE_DIR:=$(CURRENT_DIR)cube/
+LINK_DIR:=$(CURRENT_DIR)link/
 DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)/$(VERSION)/
 
 override CFLAGS+=-Wall -Wextra
@@ -73,6 +75,7 @@ cube_makefiles:=$(wildcard $(CUBE_DIR)*/Makefile)
 bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%.${VERSION})
 lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).${VERSION}.a)
 distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(DISTRIBUTED_INCLUDE_DIR)%.h)
+link_file:=$(LINK_DIR)$(PLATFORM).link
 
 reverse=$(if $(1),$(call reverse,$(wordlist 2,$(words $(1)),$(1)))) $(firstword $(1))
 
@@ -114,14 +117,18 @@ $(DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
 	@$(CP) $< $@
 
 $(ROOT_BUILD_BIN_DIR)%.$(VERSION): $(SOURCE_BIN_DIR)%.c $(lib_file) $(distributed_include_files) $(ROOT_DEPENDENCIES_FILE)
-	$(CC) $(CFLAGS) $(DEFINES:%=-D%) $< $(call reverse,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))) -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR)
+	$(CC) $(CFLAGS) $(DEFINES:%=-D%) $< $(call reverse,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))) -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR) $(addprefix -l,$(shell $(CAT) $(ROOT_LINK_FILE)))
 
-$(lib_file): $(lib_object_files) $(ROOT_DEPENDENCIES_FILE)
-	$(AR) rcs $@ $(filter-out $(ROOT_DEPENDENCIES_FILE),$^)
+$(lib_file): $(lib_object_files) $(ROOT_DEPENDENCIES_FILE) $(link_file) $(ROOT_LINK_FILE)
+	$(AR) rcs $@ $(lib_object_files)
 	$(if $(findstring $@,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))),,@$(ECHO) "$@" >> $(ROOT_DEPENDENCIES_FILE))
+	$(foreach lib, $(shell $(CAT) $(link_file)), $(if $(findstring $(lib),$(shell $(CAT) $(ROOT_LINK_FILE))),,@$(ECHO) "$(lib)" >> $(ROOT_LINK_FILE)))
 
 $(GEN_DIR)%.o: $(SOURCE_LIB_DIR)%.c $(distributed_include_files)
 	$(CC) $(CFLAGS) $(DEFINES:%=-D%) -c $< -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR)
 
 $(ROOT_DEPENDENCIES_FILE):
-	@$(ECHO) "" > $(ROOT_DEPENDENCIES_FILE)
+	@$(ECHO) "" > $@
+
+$(ROOT_LINK_FILE):
+	@$(ECHO) "" > $@

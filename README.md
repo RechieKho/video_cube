@@ -5,7 +5,7 @@ in which `Cube` project could easily embedded into other `Cube` projects with 0 
 
 What it is:
 
-- Building desktop application and static library on a unix-like environment.
+- Building desktop application (Windows, Linux and Mac OS) and static library on a unix-like environment.
 - Include other `Cube` projects as thirdparties with 0 configuration.
 - Focus on modularity.
 
@@ -43,6 +43,7 @@ These are the application required:
 | `cube`          | Stores all the thirdparty `Cube` projects. It is handled by the `Cube` Makefile.                                                                                                                                      |
 | `gen`           | Stores the generated object files of the project.                                                                                                                                                                     |
 | `include`       | Stores the header files to be distributed, it will be copied to the `build/include` directory.                                                                                                                        |
+| `link`          | Stores `.link` text files record system library to be linked to for each platform.                                                                                                                                    |
 | `source`        | Stores all the `.c` source files.                                                                                                                                                                                     |
 | `source/bin`    | Stores source files that will be build into executables. Each source file compiles to an executable with the same name and output to `build/bin`. The executable is linked to library in `build/lib`.                 |
 | `source/lib`    | Stores source files that will be build into a static library, output to `build/lib`.                                                                                                                                  |
@@ -97,7 +98,8 @@ The root `Cube` project pass these Makefile variables to the thirdparty `Cube` p
 - `ROOT_BUILD_BIN_DIR` - Path of the root `build/bin` directory.
 - `ROOT_BUILD_INCLUDE_DIR` - Path of the root `build/include` directory.
 - `ROOT_BUILD_LIB_DIR` - Path of the root `build/lib` directory.
-- `ROOT_DEPENDENCIES_FILE` - Path of a dependency file recording dependencies and its sequence.
+- `ROOT_DEPENDENCIES_FILE` - Path of a text file records dependencies and its sequence.
+- `ROOT_LINK_FILE` - Path of a text file records shared library to be linked to.
 
 the thirdparty `Cube` projects output to the root `build` directory using the given variables.
 The `Cube` Makefile should record the library's output path to `ROOT_DEPENDENCIES_FILE` once it is compiled in order to record the sequence of the dependencies.
@@ -105,6 +107,9 @@ Duplicates in `ROOT_DEPENDENCIES_FILE` is prohibited.
 
 The `ROOT_DEPENDENCIES_FILE` is named `<PROJECT_NAME>.<VERSION>.DEPENDENCIES` and reside in `ROOT_BUILD_LIB_DIR`.
 In the `ROOT_DEPENDENCIES_FILE`, The libraries depends on the libraries before itself.
+
+The `ROOT_LINK_FILE` is named `<PROJECT_NAME>.<VERSION>.LINK` and reside in `ROOT_BUILD_LIB_DIR`.
+In the `ROOT_LINK_FILE`, it stores the list of system shared library to be linked to.
 
 ## Versioning
 
@@ -136,6 +141,23 @@ int AFFIX_VERSION(foo)(int a, int b);
 #define foo(a, b) (AFFIX_VERSION(foo)(a, b))
 
 ```
+
+## Adding a `Cube` project as thirdparty library
+
+Copy the `Cube` project to `cube` folder. Clean the project after adding, removing, modifying thirdparty libraries.
+
+## Linking to a system library
+
+Add the system library name to the `.link` text file under `link` directory according to the platform.
+
+For an example, to link the `pthread` and `m` library for linux build, in `link/linux.link`:
+
+```
+pthread
+m
+```
+
+Copy the `Cube` project to `cube` folder. Clean the project after adding, removing, modifying the `.link` text files.
 
 ## Cross-compiling
 
