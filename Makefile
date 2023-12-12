@@ -2,46 +2,68 @@
 # Zero-configuration modular makefile.
 # Library, binary & header files are exported to the root project.
 
+CURRENT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+
+INCLUDE_DIR:=$(CURRENT_DIR)include/
+SOURCE_DIR:=$(CURRENT_DIR)source/
+SOURCE_BIN_DIR:=$(SOURCE_DIR)bin/
+SOURCE_LIB_DIR:=$(SOURCE_DIR)lib/
+GEN_DIR:=$(CURRENT_DIR)gen/
+CUBE_DIR:=$(CURRENT_DIR)cube/
+PLATFORM_DIR:=$(CURRENT_DIR)platform/
+LINK_DIR:=$(PLATFORM_DIR)link/
+TOOLCHAIN_DIR:=$(PLATFORM_DIR)toolchain/
+
 # Detect host platform
 # PLATFORM := windows || linux || macos
 # ARCH := x86_32 || x86_64 || arm
 ifeq ($(OS),Windows_NT)
-	PLATFORM:=windows
+	export PLATFORM?=windows
 	ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
-		ARCH:=x86_64
+		export ARCH?=x86_64
 	else ifeq ($(PROCESSOR_ARCHITECTURE),x86)
-		ARCH:=x86_32
+		export ARCH?=x86_32
+	else 
+		$(info "Undefined arch '$(PROCESSOR_ARCHITECTURE)', default to 'x86_64'.")
+		export ARCH?=x86_64
 	endif
 else
 	UNAME_PLATFORM:= $(shell uname -s)
 	ifeq ($(UNAME_PLATFORM),Linux)
-		PLATFORM:=linux
+		export PLATFORM?=linux
 	else ifeq ($(UNAME_PLATFORM),Darwin)
-		PLATFORM:=macos
+		export PLATFORM?=macos
+	else
+		$(info "Undefined platform '$(UNAME_PLATFORM)', default to 'Linux'.")
+		export PLATFORM?=linux
 	endif
 
 	UNAME_ARCH := $(shell uname -p)
 	ifeq ($(UNAME_ARCH),x86_64)
+		export ARCH?=x86_64
+	else ifneq ($(filter %86,$(UNAME_ARCH)),)
+		export ARCH?=x86_32
+	else ifneq ($(filter arm%,$(UNAME_ARCH)),)
+		export ARCH?=arm
+	else
+		$(info "Undefined arch '$(UNAME_ARCH)', default to 'x86_64'.")
 		ARCH:=x86_64
-	else ifneq ($(filter %86,$(UNAME_P)),)
-		ARCH:=x86_32
-	else ifneq ($(filter arm%,$(UNAME_P)),)
-		ARCH:=arm
 	endif
 endif
 
-AR:=ar
-CC:=clang
-MKDIR:=mkdir -p
-CP:=cp
-ECHO:=echo
-MAKE:=make
-CAT:=cat
-RM:=rm -rf
-GIT:=git
-CD:=cd
+include $(TOOLCHAIN_DIR)$(PLATFORM).$(ARCH).toolchain.mk
 
-CURRENT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+AR?=ar
+CC?=clang
+MKDIR?=mkdir -p
+CP?=cp
+ECHO?=echo
+MAKE?=make
+CAT?=cat
+RM?=rm -rf
+GIT?=git
+CD?=cd
+
 VERSION:=$(shell $(CD) $(CURRENT_DIR) && $(GIT) name-rev --tags --name-only --always --no-undefined $(shell $(GIT) rev-parse HEAD))
 PROJECT_NAME:=$(lastword $(subst /, ,$(CURRENT_DIR)))
 
@@ -52,15 +74,7 @@ export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include/
 export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib/
 export ROOT_DEPENDENCIES_FILE?=$(ROOT_BUILD_LIB_DIR)$(PROJECT_NAME).$(VERSION).DEPENDENCIES
 export ROOT_LINK_FILE?=$(ROOT_BUILD_LIB_DIR)$(PROJECT_NAME).$(VERSION).LINK
-
-INCLUDE_DIR:=$(CURRENT_DIR)include/
-SOURCE_DIR:=$(CURRENT_DIR)source/
-SOURCE_BIN_DIR:=$(SOURCE_DIR)bin/
-SOURCE_LIB_DIR:=$(SOURCE_DIR)lib/
-GEN_DIR:=$(CURRENT_DIR)gen/
-CUBE_DIR:=$(CURRENT_DIR)cube/
-LINK_DIR:=$(CURRENT_DIR)link/
-DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)/$(VERSION)/
+export ROOT_DISTRIBUTED_INCLUDE_DIR:=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)/$(VERSION)/
 
 override CFLAGS+=-Wall -Wextra
 override DEFINES+=VERSION=$(VERSION)
@@ -74,7 +88,7 @@ lib_object_files:= $(lib_source_files:$(SOURCE_LIB_DIR)%.c=$(GEN_DIR)%.o)
 cube_makefiles:=$(wildcard $(CUBE_DIR)*/Makefile)
 bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%.${VERSION})
 lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).${VERSION}.a)
-distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(DISTRIBUTED_INCLUDE_DIR)%.h)
+distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(ROOT_DISTRIBUTED_INCLUDE_DIR)%.h)
 link_file:=$(LINK_DIR)$(PLATFORM).link
 
 reverse=$(if $(1),$(call reverse,$(wordlist 2,$(words $(1)),$(1)))) $(firstword $(1))
@@ -111,9 +125,9 @@ ifeq ($(ROOT_DIR),$(CURRENT_DIR))
 endif
 .PHONY: clean
 
-$(DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
+$(ROOT_DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
 	@$(ECHO) "Export $@"
-	@$(MKDIR) $(DISTRIBUTED_INCLUDE_DIR)
+	@$(MKDIR) $(ROOT_DISTRIBUTED_INCLUDE_DIR)
 	@$(CP) $< $@
 
 $(ROOT_BUILD_BIN_DIR)%.$(VERSION): $(SOURCE_BIN_DIR)%.c $(lib_file) $(distributed_include_files) $(ROOT_DEPENDENCIES_FILE)

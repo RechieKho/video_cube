@@ -32,22 +32,26 @@ These are the application required:
 >
 > Though Windows is not a Unix-like, there are tools like [Cygwin](https://www.cygwin.com) that
 > set up a Unix-like environment.
+> You could also give an equivalent application to be use as the tools on specific platform by
+> overriding Makefile variables in `platform/toolchain`, it is useful in [cross-compiling](#cross-compiling).
 
 ## `Cube` project structure
 
-| Directory       | Description                                                                                                                                                                                                           |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `build`         | Store distributable files of the project and its thirdparty `Cube` projects.                                                                                                                                          |
-| `build/bin`     | Stores built binary of the project and its thirdparty `Cube` projects. The binary has version as suffix (`<BIN_NAME>.<VERSION>`).                                                                                     |
-| `build/include` | Stores header files of the project and its thirdparty `Cube` projects. The header files is stored in their own directory with its project's name and version as the name (`build/include/<PROJECT_NAME>/<VERSION>/`). |
-| `build/lib`     | Stores built binary with the file with the naming format as `lib<PROJECT_NAME>.<VERSION>.a`.                                                                                                                          |
-| `cube`          | Stores all the thirdparty `Cube` projects. It is handled by the `Cube` Makefile.                                                                                                                                      |
-| `gen`           | Stores the generated object files of the project.                                                                                                                                                                     |
-| `include`       | Stores the header files to be distributed, it will be copied to the `build/include` directory.                                                                                                                        |
-| `link`          | Stores `.link` text files record system library to be linked to for each platform.                                                                                                                                    |
-| `source`        | Stores all the `.c` source files.                                                                                                                                                                                     |
-| `source/bin`    | Stores source files that will be build into executables. Each source file compiles to an executable with the same name and output to `build/bin`. The executable is linked to library in `build/lib`.                 |
-| `source/lib`    | Stores source files that will be build into a static library, output to `build/lib`.                                                                                                                                  |
+| Directory            | Description                                                                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `build`              | Store distributable files of the project and its thirdparty `Cube` projects.                                                                                                                                          |
+| `build/bin`          | Stores built binary of the project and its thirdparty `Cube` projects. The binary has version as suffix (`<BIN_NAME>.<VERSION>`).                                                                                     |
+| `build/include`      | Stores header files of the project and its thirdparty `Cube` projects. The header files is stored in their own directory with its project's name and version as the name (`build/include/<PROJECT_NAME>/<VERSION>/`). |
+| `build/lib`          | Stores built binary with the file with the naming format as `lib<PROJECT_NAME>.<VERSION>.a`.                                                                                                                          |
+| `cube`               | Stores all the thirdparty `Cube` projects. It is handled by the `Cube` Makefile.                                                                                                                                      |
+| `gen`                | Stores the generated object files of the project.                                                                                                                                                                     |
+| `include`            | Stores the header files to be distributed, it will be copied to the `build/include` directory.                                                                                                                        |
+| `platform`           | Stores platform specific configuration.                                                                                                                                                                               |
+| `platform/link`      | Stores `.link` text files record system library to be linked to for each platform.                                                                                                                                    |
+| `platform/toolchain` | Stores configuration Makefiles for overriding build tools for specific platform, useful for [cross-compiling](#cross-compiling).                                                                                      |
+| `source`             | Stores all the `.c` source files.                                                                                                                                                                                     |
+| `source/bin`         | Stores source files that will be build into executables. Each source file compiles to an executable with the same name and output to `build/bin`. The executable is linked to library in `build/lib`.                 |
+| `source/lib`         | Stores source files that will be build into a static library, output to `build/lib`.                                                                                                                                  |
 
 > [!NOTE]
 >
@@ -162,4 +166,17 @@ Clean the project after adding, removing, modifying the `.link` text files.
 
 ## Cross-compiling
 
-Cross-compiling isn't in the scope of the `Cube` Makefile, the programmer should install the appropriate tools and set the `Cube` Makefile variables for cross-compiling.
+Cross-compiling can be achieve by providing the appropriate tools to the Makefile.
+The programmer should install the appropriate tools and then provide it via the toolchain Makefiles in `platform/toolchain`.
+
+You could either:
+
+1. provide compilers native to each platforms and compile it on their own platform, or,
+2. provide a cross-compiler for all the toolchain Makefiles of other platforms and only compile from your native platform.
+
+It is not advisible to use the second option as you could only compile from your native platform, which prevents other user
+from compiling on their own.
+It would only be useful when you are targeting a platform in which you cannot compile on it (e.g. mobile / embedded system),
+but it usually not the case as we are targeting desktops. Still, you are free to do whatever you want.
+
+To use the toolchain Makefile of a specific platform with a specific arch. You can set `PLATFORM` Makefile variable for the target platform and `ARCH` Makefile variable for the target architecture. It will default to the host system if no value given.
