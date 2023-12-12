@@ -27,6 +27,11 @@ These are the application required:
 
 `Cube` projects must be a `git` repository.
 
+> [!NOTE]
+>
+> Though Windows is not a Unix-like, there are tools like [Cygwin](https://www.cygwin.com) that
+> set up a Unix-like environment.
+
 ## `Cube` project structure
 
 | Directory       | Description                                                                                                                                                                                                           |
