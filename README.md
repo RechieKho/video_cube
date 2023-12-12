@@ -158,7 +158,7 @@ pthread
 m
 ```
 
-Copy the `Cube` project to `cube` folder. Clean the project after adding, removing, modifying the `.link` text files.
+Clean the project after adding, removing, modifying the `.link` text files.
 
 ## Cross-compiling
 
