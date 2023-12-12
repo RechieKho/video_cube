@@ -2,6 +2,34 @@
 # Zero-configuration modular makefile.
 # Library, binary & header files are exported to the root project.
 
+# Detect host platform
+# PLATFORM := windows || linux || macos
+# ARCH := x86_32 || x86_64 || arm
+ifeq ($(OS),Windows_NT)
+	PLATFORM:=windows
+	ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
+		ARCH:=x86_64
+	else ifeq ($(PROCESSOR_ARCHITECTURE),x86)
+		ARCH:=x86_32
+	endif
+else
+	UNAME_PLATFORM:= $(shell uname -s)
+	ifeq ($(UNAME_PLATFORM),Linux)
+		PLATFORM:=linux
+	else ifeq ($(UNAME_PLATFORM),Darwin)
+		PLATFORM:=macos
+	endif
+
+	UNAME_ARCH := $(shell uname -p)
+	ifeq ($(UNAME_ARCH),x86_64)
+		ARCH:=x86_64
+	else ifneq ($(filter %86,$(UNAME_P)),)
+		ARCH:=x86_32
+	else ifneq ($(filter arm%,$(UNAME_P)),)
+		ARCH:=arm
+	endif
+endif
+
 AR:=ar
 CC:=clang
 MKDIR:=mkdir -p
