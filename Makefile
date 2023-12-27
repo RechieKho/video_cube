@@ -11,7 +11,7 @@ SOURCE_LIB_DIR:=$(SOURCE_DIR)lib/
 GEN_DIR:=$(CURRENT_DIR)gen/
 CUBE_DIR:=$(CURRENT_DIR)cube/
 PLATFORM_DIR:=$(CURRENT_DIR)platform/
-LINK_DIR:=$(PLATFORM_DIR)link/
+FLAG_DIR:=$(PLATFORM_DIR)flag/
 TOOLCHAIN_DIR:=$(PLATFORM_DIR)toolchain/
 
 # Detect host platform
@@ -75,7 +75,7 @@ export ROOT_BUILD_BIN_DIR?=$(ROOT_BUILD_DIR)bin/
 export ROOT_BUILD_INCLUDE_DIR?=$(ROOT_BUILD_DIR)include/
 export ROOT_BUILD_LIB_DIR?=$(ROOT_BUILD_DIR)lib/
 export ROOT_DEPENDENCIES_FILE?=$(ROOT_BUILD_LIB_DIR)$(PROJECT_NAME).$(VERSION).DEPENDENCIES
-export ROOT_LINK_FILE?=$(ROOT_BUILD_LIB_DIR)$(PROJECT_NAME).$(VERSION).LINK
+export ROOT_FLAG_FILE?=$(ROOT_BUILD_LIB_DIR)$(PROJECT_NAME).$(VERSION).FLAG
 export ROOT_DISTRIBUTED_INCLUDE_DIR?=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)/$(VERSION)/
 
 override CFLAGS+=-Wall -Wextra
@@ -91,7 +91,7 @@ cube_makefiles:=$(wildcard $(CUBE_DIR)*/Makefile)
 bin_files:=$(bin_sources_files:$(SOURCE_BIN_DIR)%.c=$(ROOT_BUILD_BIN_DIR)%.${VERSION})
 lib_file:=$(if $(lib_object_files),$(ROOT_BUILD_LIB_DIR)lib$(PROJECT_NAME).${VERSION}.a)
 distributed_include_files:=$(include_files:$(INCLUDE_DIR)%.h=$(ROOT_DISTRIBUTED_INCLUDE_DIR)%.h)
-link_file:=$(LINK_DIR)$(PLATFORM).link
+flag_file:=$(FLAG_DIR)$(PLATFORM).flag
 
 reverse=$(if $(1),$(call reverse,$(wordlist 2,$(words $(1)),$(1)))) $(firstword $(1))
 
@@ -133,12 +133,12 @@ $(ROOT_DISTRIBUTED_INCLUDE_DIR)%.h: $(INCLUDE_DIR)%.h
 	@$(CP) $< $@
 
 $(ROOT_BUILD_BIN_DIR)%.$(VERSION): $(SOURCE_BIN_DIR)%.c $(lib_file) $(distributed_include_files) $(ROOT_DEPENDENCIES_FILE)
-	$(CC) $(CFLAGS) $(DEFINES:%=-D%) $< $(call reverse,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))) -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR) -I$(CURRENT_DIR) $(addprefix -l,$(shell $(CAT) $(ROOT_LINK_FILE)))
+	$(CC) $(CFLAGS) $(DEFINES:%=-D%) $< $(call reverse,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))) -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR) -I$(CURRENT_DIR) $(shell $(CAT) $(ROOT_FLAG_FILE))
 
-$(lib_file): $(lib_object_files) $(ROOT_DEPENDENCIES_FILE) $(link_file) $(ROOT_LINK_FILE)
+$(lib_file): $(lib_object_files) $(ROOT_DEPENDENCIES_FILE) $(flag_file) $(ROOT_FLAG_FILE)
 	$(AR) rcs $@ $(lib_object_files)
 	$(if $(findstring $@,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))),,@$(ECHO) "$@" >> $(ROOT_DEPENDENCIES_FILE))
-	$(foreach lib, $(shell $(CAT) $(link_file)), $(if $(findstring $(lib),$(shell $(CAT) $(ROOT_LINK_FILE))),,@$(ECHO) "$(lib)" >> $(ROOT_LINK_FILE)))
+	$(foreach flag, $(shell $(CAT) $(flag_file)), $(if $(findstring $(flag),$(shell $(CAT) $(ROOT_FLAG_FILE))),,@$(ECHO) "$(flag)" >> $(ROOT_FLAG_FILE)))
 
 $(GEN_DIR)%.o: $(SOURCE_LIB_DIR)%.c $(distributed_include_files)
 	$(CC) $(CFLAGS) $(DEFINES:%=-D%) -c $< -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR) -I$(CURRENT_DIR)
@@ -146,5 +146,5 @@ $(GEN_DIR)%.o: $(SOURCE_LIB_DIR)%.c $(distributed_include_files)
 $(ROOT_DEPENDENCIES_FILE):
 	@$(ECHO) "" > $@
 
-$(ROOT_LINK_FILE):
+$(ROOT_FLAG_FILE):
 	@$(ECHO) "" > $@
