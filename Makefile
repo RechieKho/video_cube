@@ -137,8 +137,8 @@ $(ROOT_BUILD_BIN_DIR)%.$(VERSION): $(SOURCE_BIN_DIR)%.c $(lib_file) $(distribute
 
 $(lib_file): $(lib_object_files) $(ROOT_DEPENDENCIES_FILE) $(flag_file) $(ROOT_FLAG_FILE)
 	$(AR) rcs $@ $(lib_object_files)
-	$(if $(findstring $@,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))),,@$(ECHO) "$@" >> $(ROOT_DEPENDENCIES_FILE))
-	$(foreach flag, $(shell $(CAT) $(flag_file)), $(if $(findstring $(flag),$(shell $(CAT) $(ROOT_FLAG_FILE))),,@$(ECHO) "$(flag)" >> $(ROOT_FLAG_FILE)))
+	@$(if $(findstring $@,$(shell $(CAT) $(ROOT_DEPENDENCIES_FILE))),,$(ECHO) "$@" >> $(ROOT_DEPENDENCIES_FILE);)
+	@$(foreach flag, $(shell $(CAT) $(flag_file)), $(if $(findstring $(flag),$(shell $(CAT) $(ROOT_FLAG_FILE))),,$(ECHO) "$(flag)" >> $(ROOT_FLAG_FILE);))
 
 $(GEN_DIR)%.o: $(SOURCE_LIB_DIR)%.c $(distributed_include_files)
 	$(CC) $(CFLAGS) $(DEFINES:%=-D%) -c $< -o $@ -I$(ROOT_BUILD_INCLUDE_DIR) -I$(INCLUDE_DIR) -I$(CURRENT_DIR)
