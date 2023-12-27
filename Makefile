@@ -81,7 +81,7 @@ export ROOT_DISTRIBUTED_INCLUDE_DIR?=$(ROOT_BUILD_INCLUDE_DIR)$(PROJECT_NAME)/$(
 override CFLAGS+=-Wall -Wextra
 override DEFINES+=VERSION=$(VERSION)
 override DEBUG_CFLAGS+=-O0 -g -DDEBUG
-override RELEASE_CFLAGS+=-02 -DRELEASE
+override RELEASE_CFLAGS+=-O2 -DRELEASE
 
 lib_source_files:=$(wildcard $(SOURCE_LIB_DIR)*.c)
 bin_sources_files=$(wildcard $(SOURCE_BIN_DIR)*.c)

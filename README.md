@@ -134,8 +134,12 @@ Both `child_b v1_0_9` and `child_b v1_0_1` will output their own static library 
 Since they are essentially the same library but different version, it could contain the same functions with the same symbols.
 This would lead to duplicate symbol linker error when linking both library together.
 
-To fix this issue, the programmer should consider the version when naming the function.
-A macro `VERSION` is also defined when compiling, the programmer could utilize this macro to differentiate function of different version.
+To fix this issue, you could either:
+
+1. Consider the version when naming the function.
+2. Make sure the `Cube` library has the same version.
+
+For the first option, a macro `VERSION` is also defined when compiling, the programmer could utilize this macro to differentiate function of different version.
 
 ```c
 #define LITERAL_CONCAT(x, y) x ## y
@@ -144,7 +148,6 @@ A macro `VERSION` is also defined when compiling, the programmer could utilize t
 
 int AFFIX_VERSION(foo)(int a, int b);
 #define foo(a, b) (AFFIX_VERSION(foo)(a, b))
-
 ```
 
 ## Adding a `Cube` project as thirdparty library
