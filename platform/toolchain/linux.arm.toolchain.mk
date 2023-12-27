@@ -8,3 +8,5 @@ CAT:=cat
 RM:=rm -rf
 GIT:=git
 CD:=cd
+
+override CFLAGS+=-Wno-unused-parameter

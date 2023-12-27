@@ -1,0 +1,3 @@
+[submodule "thirdparty/tigr"]
+	path = thirdparty/tigr
+	url = https://github.com/erkkah/tigr.git

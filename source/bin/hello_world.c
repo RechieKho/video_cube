@@ -1,8 +1,12 @@
-#include <stdio.h>
-#include <addition.h>
+#include <video_cube.h>
 
 int main() {
-    printf("Hello world.\n");
-    printf("Add 1 and 2 produce %d.\n", add(1, 2));
+    Tigr* screen = tigrWindow(320, 240, "Hello", 0);
+    while (!tigrClosed(screen) && !tigrKeyDown(screen, TK_ESCAPE)) {
+        tigrClear(screen, tigrRGB(0x80, 0x90, 0xa0));
+        tigrPrint(screen, tfont, 120, 110, tigrRGB(0xff, 0xff, 0xff), "Hello, world.");
+        tigrUpdate(screen);
+    }
+    tigrFree(screen);
     return 0;
 }
