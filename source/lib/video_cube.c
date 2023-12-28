@@ -1,13 +1,4 @@
-//////// Start of inlined file: tigr_amalgamated.c ////////
-
-
 #include <video_cube.h>
-
-//////// Start of inlined file: tigr_internal.h ////////
-
-// can't use pragma once here because this file probably will endup in .c
-#ifndef __TIGR_INTERNAL_H__
-#define __TIGR_INTERNAL_H__
 
 #define _CRT_SECURE_NO_WARNINGS NOPE
 
@@ -16,22 +7,6 @@
 #define TIGR_GAPI_GL
 #endif
 
-// Creates a new bitmap, with extra payload bytes.
-Tigr* tigrBitmap2(int w, int h, int extra);
-
-// Resizes an existing bitmap.
-void tigrResize(Tigr* bmp, int w, int h);
-
-// Calculates the biggest scale that a bitmap can fit into an area at.
-int tigrCalcScale(int bmpW, int bmpH, int areaW, int areaH);
-
-// Calculates a new scale, taking minimum-scale flags into account.
-int tigrEnforceScale(int scale, int flags);
-
-// Calculates the correct position for a bitmap to fit into a window.
-void tigrPosition(Tigr* bmp, int scale, int windowW, int windowH, int out[4]);
-
-// ----------------------------------------------------------
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -144,19 +119,33 @@ typedef struct {
     TigrTouchPoint touchPoints[MAX_TOUCH_POINTS];
 #endif  // __ANDROID__ __IOS__
 } TigrInternal;
-// ----------------------------------------------------------
+
+// Creates a new bitmap, with extra payload bytes.
+Tigr* tigrBitmap2(int w, int h, int extra);
+
+// Resizes an existing bitmap.
+void tigrResize(Tigr* bmp, int w, int h);
+
+// Calculates the biggest scale that a bitmap can fit into an area at.
+int tigrCalcScale(int bmpW, int bmpH, int areaW, int areaH);
+
+// Calculates a new scale, taking minimum-scale flags into account.
+int tigrEnforceScale(int scale, int flags);
+
+// Calculates the correct position for a bitmap to fit into a window.
+void tigrPosition(Tigr* bmp, int scale, int windowW, int windowH, int out[4]);
 
 TigrInternal* tigrInternal(Tigr* bmp);
 
 void tigrGAPICreate(Tigr* bmp);
+
 void tigrGAPIDestroy(Tigr* bmp);
+
 int tigrGAPIBegin(Tigr* bmp);
+
 int tigrGAPIEnd(Tigr* bmp);
+
 void tigrGAPIPresent(Tigr* bmp, int w, int h);
-
-#endif
-
-//////// End of inlined file: tigr_internal.h ////////
 
 //////// Start of inlined file: tigr_upscale_gl_vs.h ////////
 
@@ -6429,7 +6418,3 @@ void tigrSetPostFX(Tigr* bmp, float p1, float p2, float p3, float p4) {
 #endif // TIGR_HEADLESS
 
 //////// End of inlined file: tigr_utils.c ////////
-
-
-//////// End of inlined file: tigr_amalgamated.c ////////
-
