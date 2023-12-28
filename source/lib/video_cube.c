@@ -1,5 +1,20 @@
 #include <video_cube.h>
 
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+#include <setjmp.h>
+#include <stdarg.h>
+#include <assert.h>
+#include <stddef.h>
+#include <limits.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <time.h>
+#include <stdatomic.h>
+
 #define _CRT_SECURE_NO_WARNINGS NOPE
 
 // Graphics configuration.
@@ -124,28 +139,28 @@ typedef struct {
 static Tigr* tigrBitmapWithExtraMem(int w, int h, int extra);
 
 // Resizes an existing bitmap.
-void tigrResize(Tigr* bmp, int w, int h);
+static void tigrResize(Tigr* bmp, int w, int h);
 
 // Calculates the biggest scale that a bitmap can fit into an area at.
-int tigrCalcScale(int bmpW, int bmpH, int areaW, int areaH);
+static int tigrCalcScale(int bmpW, int bmpH, int areaW, int areaH);
 
 // Calculates a new scale, taking minimum-scale flags into account.
-int tigrEnforceScale(int scale, int flags);
+static int tigrEnforceScale(int scale, int flags);
 
 // Calculates the correct position for a bitmap to fit into a window.
-void tigrPosition(Tigr* bmp, int scale, int windowW, int windowH, int out[4]);
+static void tigrPosition(Tigr* bmp, int scale, int windowW, int windowH, int out[4]);
 
-TigrInternal* tigrInternal(Tigr* bmp);
+static TigrInternal* tigrInternal(Tigr* bmp);
 
-void tigrGAPICreate(Tigr* bmp);
+static void tigrGAPICreate(Tigr* bmp);
 
-void tigrGAPIDestroy(Tigr* bmp);
+static void tigrGAPIDestroy(Tigr* bmp);
 
-int tigrGAPIBegin(Tigr* bmp);
+static int tigrGAPIBegin(Tigr* bmp);
 
-int tigrGAPIEnd(Tigr* bmp);
+static int tigrGAPIEnd(Tigr* bmp);
 
-void tigrGAPIPresent(Tigr* bmp, int w, int h);
+static void tigrGAPIPresent(Tigr* bmp, int w, int h);
 
 #if __ANDROID__ || __IOS__
 #define GLSL_VERSION_HEADER \
@@ -155,7 +170,7 @@ void tigrGAPIPresent(Tigr* bmp, int w, int h);
 #define GLSL_VERSION_HEADER "#version 330 core\n"
 #endif
 
-const char tigr_upscale_gl_vs[] = {
+static const char tigr_upscale_gl_vs[] = {
     GLSL_VERSION_HEADER
     "layout (location = 0) in vec2 pos_in;"
     "layout (location = 1) in vec2 uv_in;"
@@ -169,9 +184,9 @@ const char tigr_upscale_gl_vs[] = {
     "}"
 };
 
-const int tigr_upscale_gl_vs_size = (int)sizeof(tigr_upscale_gl_vs) - 1;
+static const int tigr_upscale_gl_vs_size = (int)sizeof(tigr_upscale_gl_vs) - 1;
 
-const char tigr_upscale_gl_fs[] = {
+static const char tigr_upscale_gl_fs[] = {
     GLSL_VERSION_HEADER
     "in vec2 uv;"
     "out vec4 color;"
@@ -184,9 +199,9 @@ const char tigr_upscale_gl_fs[] = {
     "}\n"
 };
 
-const int tigr_upscale_gl_fs_size = (int)sizeof(tigr_upscale_gl_fs) - 1;
+static const int tigr_upscale_gl_fs_size = (int)sizeof(tigr_upscale_gl_fs) - 1;
 
-const char tigr_default_fx_gl_fs[] = {
+static const char tigr_default_fx_gl_fs[] = {
     "void fxShader(out vec4 color, in vec2 uv) {"
     "   vec2 tex_size = vec2(textureSize(image, 0));"
     "   vec2 uv_blur = mix(floor(uv * tex_size) + 0.5, uv * tex_size, parameters.xy) / tex_size;"
@@ -197,11 +212,7 @@ const char tigr_default_fx_gl_fs[] = {
     "}"
 };
 
-const int tigr_default_fx_gl_fs_size = (int)sizeof(tigr_default_fx_gl_fs) - 1;
-
-//#include "tigr_internal.h"
-#include <stdlib.h>
-#include <string.h>
+static const int tigr_default_fx_gl_fs_size = (int)sizeof(tigr_default_fx_gl_fs) - 1;
 
 // Expands 0-255 into 0-256
 #define EXPAND(X) ((X) + ((X) > 0))
@@ -251,7 +262,7 @@ void tigrFree(Tigr* bmp) {
 #endif // TIGR_HEADLESS
 
 
-void tigrResize(Tigr* bmp, int w, int h) {
+static void tigrResize(Tigr* bmp, int w, int h) {
     if (bmp->w == w && bmp->h == h) {
         return;
     }
@@ -271,7 +282,7 @@ void tigrResize(Tigr* bmp, int w, int h) {
     bmp->h = h;
 }
 
-int tigrCalcScale(int bmpW, int bmpH, int areaW, int areaH) {
+static int tigrCalcScale(int bmpW, int bmpH, int areaW, int areaH) {
     // We want it as big as possible in the window, but still
     // maintaining the correct aspect ratio, and always
     // having an integer pixel size.
@@ -286,7 +297,7 @@ int tigrCalcScale(int bmpW, int bmpH, int areaW, int areaH) {
     return (scale > 1) ? scale : 1;
 }
 
-int tigrEnforceScale(int scale, int flags) {
+static int tigrEnforceScale(int scale, int flags) {
     if ((flags & TIGR_4X) && scale < 4)
         scale = 4;
     if ((flags & TIGR_3X) && scale < 3)
@@ -296,7 +307,7 @@ int tigrEnforceScale(int scale, int flags) {
     return scale;
 }
 
-void tigrPosition(Tigr* bmp, int scale, int windowW, int windowH, int out[4]) {
+static void tigrPosition(Tigr* bmp, int scale, int windowW, int windowH, int out[4]) {
     // Center the image on screen at this scale.
     out[0] = (windowW - bmp->w * scale) / 2;
     out[1] = (windowH - bmp->h * scale) / 2;
@@ -600,11 +611,6 @@ void tigrBlitMode(Tigr* dst, int mode) {
 #undef CLIP1
 #undef CLIP
 
-//#include "tigr_internal.h"
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
 typedef struct {
     const unsigned char *p, *end;
 } PNG;
@@ -890,12 +896,6 @@ Tigr* tigrLoadImage(const char* fileName) {
     return bmp;
 }
 
-//#include "tigr_internal.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
 typedef struct {
     unsigned crc, adler, bits, prev, runlen;
     FILE* out;
@@ -1080,10 +1080,6 @@ int tigrSaveImage(const char* fileName, Tigr* bmp) {
     fclose(out);
     return !err;
 }
-
-//#include "tigr_internal.h"
-#include <stdlib.h>
-#include <setjmp.h>
 
 typedef struct {
     unsigned bits, count;
@@ -1576,11 +1572,6 @@ const unsigned char tigr_font[] = {
 int tigr_font_size = (int)sizeof(tigr_font);
 
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
-
 #ifdef _MSC_VER
 #define vsnprintf _vsnprintf
 #endif
@@ -1858,22 +1849,15 @@ int tigrTextHeight(TigrFont* font, const char* text) {
 
 #ifndef TIGR_HEADLESS
 
-//#include "tigr_internal.h"
-#include <assert.h>
-
 // not really windows stuff
-TigrInternal* tigrInternal(Tigr* bmp) {
+static TigrInternal* tigrInternal(Tigr* bmp) {
     assert(bmp->handle);
     return (TigrInternal*)(bmp + 1);
 }
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <shellapi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
 
 #pragma comment(lib, "opengl32")  // glViewport
 #pragma comment(lib, "shell32")   // CommandLineToArgvW
@@ -2703,15 +2687,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #endif  // defined(__IOS__) || defined (__MACOS__)
 
 #if __MACOS__
-
-#include <assert.h>
-#include <limits.h>
-#include <math.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreGraphics/CoreGraphics.h>
@@ -3645,13 +3620,13 @@ void tigrUpdate(Tigr* bmp) {
     tigrGAPIEnd(bmp);
 }
 
-int tigrGAPIBegin(Tigr* bmp) {
+static int tigrGAPIBegin(Tigr* bmp) {
     TigrInternal* win = tigrInternal(bmp);
     objc_msgSend_void((id)win->gl.glContext, sel("makeCurrentContext"));
     return 0;
 }
 
-int tigrGAPIEnd(Tigr* bmp) {
+static int tigrGAPIEnd(Tigr* bmp) {
     (void)bmp;
     objc_msgSend_void(class("NSOpenGLContext"), sel("clearCurrentContext"));
     return 0;
@@ -3760,8 +3735,6 @@ float tigrTime(void) {
 #include <objc/runtime.h>
 #include <dispatch/dispatch.h>
 #include <os/log.h>
-#include <time.h>
-#include <stdatomic.h>
 
 id makeNSString(const char* str) {
     return objc_msgSend_t(id, const char*)(class("NSString"), sel("stringWithUTF8String:"), str);
@@ -4314,11 +4287,6 @@ void tigr_android_destroy();
 
 #if __linux__ && !__ANDROID__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdarg.h>
 #include <sys/time.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -4949,11 +4917,6 @@ int tigrTouch(Tigr* bmp, TigrTouchPoint* points, int maxPoints) {
 #ifndef TIGR_HEADLESS
 
 #ifdef __ANDROID__
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
 #include <android/log.h>
 #include <android/native_window.h>
@@ -5706,9 +5669,6 @@ void* tigrReadFile(const char* fileName, int* length) {
 
 #ifndef TIGR_HEADLESS
 
-//#include "tigr_internal.h"
-#include <assert.h>
-
 #ifdef TIGR_GAPI_GL
 #if __linux__
 #if __ANDROID__
@@ -6011,7 +5971,7 @@ void tigrCreateShaderProgram(GLStuff* gl, const char* fxSource, int fxSize) {
     gl->uniform_parameters = glGetUniformLocation(gl->program, "parameters");
 }
 
-void tigrGAPICreate(Tigr* bmp) {
+static void tigrGAPICreate(Tigr* bmp) {
     TigrInternal* win = tigrInternal(bmp);
     GLStuff* gl = &win->gl;
     GLuint VBO;
@@ -6058,7 +6018,7 @@ void tigrGAPICreate(Tigr* bmp) {
     tigrCheckGLError("initialization");
 }
 
-void tigrGAPIDestroy(Tigr* bmp) {
+static void tigrGAPIDestroy(Tigr* bmp) {
     TigrInternal* win = tigrInternal(bmp);
     GLStuff* gl = &win->gl;
 
@@ -6112,7 +6072,7 @@ void tigrGAPIDraw(int legacy, GLuint uniform_model, GLuint tex, Tigr* bmp, int x
     }
 }
 
-void tigrGAPIPresent(Tigr* bmp, int w, int h) {
+static void tigrGAPIPresent(Tigr* bmp, int w, int h) {
     TigrInternal* win = tigrInternal(bmp);
     GLStuff* gl = &win->gl;
 
@@ -6165,9 +6125,6 @@ void tigrGAPIPresent(Tigr* bmp, int w, int h) {
 #endif
 #endif // #ifndef TIGR_HEADLESS
 
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #ifndef __ANDROID__
 
