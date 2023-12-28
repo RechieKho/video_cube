@@ -121,7 +121,7 @@ typedef struct {
 } TigrInternal;
 
 // Creates a new bitmap, with extra payload bytes.
-Tigr* tigrBitmap2(int w, int h, int extra);
+static Tigr* tigrBitmapWithExtraMem(int w, int h, int extra);
 
 // Resizes an existing bitmap.
 void tigrResize(Tigr* bmp, int w, int h);
@@ -228,7 +228,7 @@ const int tigr_default_fx_gl_fs_size = (int)sizeof(tigr_default_fx_gl_fs) - 1;
     if (w <= 0 || h <= 0)       \
     return
 
-Tigr* tigrBitmap2(int w, int h, int extra) {
+static Tigr* tigrBitmapWithExtraMem(int w, int h, int extra) {
     Tigr* tigr = (Tigr*)calloc(1, sizeof(Tigr) + extra);
     tigr->w = w;
     tigr->h = h;
@@ -240,7 +240,7 @@ Tigr* tigrBitmap2(int w, int h, int extra) {
 }
 
 Tigr* tigrBitmap(int w, int h) {
-    return tigrBitmap2(w, h, 0);
+    return tigrBitmapWithExtraMem(w, h, 0);
 }
 
 #ifdef TIGR_HEADLESS
@@ -2322,7 +2322,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
     }
 
     // Wrap a bitmap around it.
-    bmp = tigrBitmap2(w, h, sizeof(TigrInternal));
+    bmp = tigrBitmapWithExtraMem(w, h, sizeof(TigrInternal));
     bmp->handle = hWnd;
 
     // Set up the Windows parts.
@@ -3070,7 +3070,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
         bitmapScale = tigrEnforceScale(bitmapScale, flags);
     }
 
-    bmp = tigrBitmap2(w, h, sizeof(TigrInternal));
+    bmp = tigrBitmapWithExtraMem(w, h, sizeof(TigrInternal));
     bmp->handle = window;
 
     // Set the handle
@@ -4099,7 +4099,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
     }
 
     scale = tigrEnforceScale(scale, flags);
-    Tigr* bmp = tigrBitmap2(w, h, sizeof(TigrInternal));
+    Tigr* bmp = tigrBitmapWithExtraMem(w, h, sizeof(TigrInternal));
     bmp->handle = (void*)4711;
     TigrInternal* win = tigrInternal(bmp);
     win->shown = 0;
@@ -4531,7 +4531,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
 
     setupVSync(dpy, xwin);
 
-    bmp = tigrBitmap2(w, h, sizeof(TigrInternal));
+    bmp = tigrBitmapWithExtraMem(w, h, sizeof(TigrInternal));
     bmp->handle = (void*)xwin;
 
     TigrInternal* win = tigrInternal(bmp);
@@ -5484,7 +5484,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
 
     scale = tigrEnforceScale(scale, flags);
 
-    Tigr* bmp = tigrBitmap2(w, h, sizeof(TigrInternal));
+    Tigr* bmp = tigrBitmapWithExtraMem(w, h, sizeof(TigrInternal));
     bmp->handle = (void*)gState.window;
 
     TigrInternal* win = tigrInternal(bmp);
