@@ -150,7 +150,7 @@ static int tigrEnforceScale(int scale, int flags);
 // Calculates the correct position for a bitmap to fit into a window.
 static void tigrPosition(Tigr* bmp, int scale, int windowW, int windowH, int out[4]);
 
-static TigrInternal* tigrInternal(Tigr* bmp);
+static TigrInternal* tigrGetInternal(Tigr* bmp);
 
 static void tigrGAPICreate(Tigr* bmp);
 
@@ -1850,7 +1850,7 @@ int tigrTextHeight(TigrFont* font, const char* text) {
 #ifndef TIGR_HEADLESS
 
 // not really windows stuff
-static TigrInternal* tigrInternal(Tigr* bmp) {
+static TigrInternal* tigrGetInternal(Tigr* bmp) {
     assert(bmp->handle);
     return (TigrInternal*)(bmp + 1);
 }
@@ -1896,7 +1896,7 @@ void tigrError(Tigr* bmp, const char* message, ...) {
     tmp[sizeof(tmp) - 1] = 0;
     va_end(args);
 
-    MessageBoxW(bmp ? (HWND)bmp->handle : NULL, unicode(tmp), bmp ? tigrInternal(bmp)->wtitle : L"Error",
+    MessageBoxW(bmp ? (HWND)bmp->handle : NULL, unicode(tmp), bmp ? tigrGetInternal(bmp)->wtitle : L"Error",
                 MB_OK | MB_ICONERROR);
     exit(1);
 }
@@ -1904,7 +1904,7 @@ void tigrError(Tigr* bmp, const char* message, ...) {
 void tigrEnterBorderlessWindowed(Tigr* bmp) {
     // Enter borderless windowed mode.
     MONITORINFO mi = { sizeof(mi) };
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
 
     GetWindowRect((HWND)bmp->handle, &win->oldPos);
 
@@ -1916,7 +1916,7 @@ void tigrEnterBorderlessWindowed(Tigr* bmp) {
 }
 
 void tigrLeaveBorderlessWindowed(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
 
     win->dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
     SetWindowLong((HWND)bmp->handle, GWL_STYLE, win->dwStyle);
@@ -1932,7 +1932,7 @@ void tigrWinUpdateWidgets(Tigr* bmp, int dw, int dh) {
     TPixel col;
     TPixel off = tigrRGB(255, 255, 255);
     TPixel on = tigrRGB(0, 200, 255);
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     (void)dh;
 
     tigrClear(win->widgets, tigrRGBA(0, 0, 0, 0));
@@ -2009,7 +2009,7 @@ void tigrUpdate(Tigr* bmp) {
     MSG msg;
     RECT rc;
     int dw, dh;
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
 
     if (!win->shown) {
         win->shown = 1;
@@ -2047,7 +2047,7 @@ typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALFARPROC_)(int);
 static PFNWGLSWAPINTERVALFARPROC_ wglSwapIntervalEXT_ = 0;
 
 int tigrGAPIBegin(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
 
     return wglMakeCurrent(win->gl.dc, win->gl.hglrc) ? 0 : -1;
 }
@@ -2083,7 +2083,7 @@ LRESULT CALLBACK tigrWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
     bmp = (Tigr*)GetPropW(hWnd, L"Tigr");
     if (bmp)
-        win = tigrInternal(bmp);
+        win = tigrGetInternal(bmp);
 
     switch (message) {
         case WM_PAINT:
@@ -2310,7 +2310,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
     bmp->handle = hWnd;
 
     // Set up the Windows parts.
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     win->dwStyle = dwStyle;
     win->wtitle = wtitle;
     win->shown = 0;
@@ -2354,7 +2354,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
 
 void tigrFree(Tigr* bmp) {
     if (bmp->handle) {
-        TigrInternal* win = tigrInternal(bmp);
+        TigrInternal* win = tigrGetInternal(bmp);
         tigrGAPIDestroy(bmp);
 
         if (win->gl.hglrc && !wglDeleteContext(win->gl.hglrc)) {
@@ -2376,7 +2376,7 @@ void tigrFree(Tigr* bmp) {
 }
 
 int tigrClosed(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     int val = win->closed;
     win->closed = 0;
     return val;
@@ -2405,7 +2405,7 @@ void tigrMouse(Tigr* bmp, int* x, int* y, int* buttons) {
     POINT pt;
     TigrInternal* win;
 
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     GetCursorPos(&pt);
     ScreenToClient((HWND)bmp->handle, &pt);
     *x = (pt.x - win->pos[0]) / win->scale;
@@ -2583,7 +2583,7 @@ int tigrKeyDown(Tigr* bmp, int key) {
     int k = tigrWinVK(key);
     if (GetFocus() != bmp->handle)
         return 0;
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     return win->keys[k] && !win->prev[k];
 }
 
@@ -2592,12 +2592,12 @@ int tigrKeyHeld(Tigr* bmp, int key) {
     int k = tigrWinVK(key);
     if (GetFocus() != bmp->handle)
         return 0;
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     return win->keys[k];
 }
 
 int tigrReadChar(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     int c = win->lastChar;
     win->lastChar = 0;
     return c;
@@ -2729,7 +2729,7 @@ void _tigrResetTime(void) {
     tigrTimestamp = mach_absolute_time();
 }
 
-TigrInternal* _tigrInternalCocoa(id window) {
+TigrInternal* _tigrGetInternalCocoa(id window) {
     if (!window)
         return NULL;
 
@@ -2739,7 +2739,7 @@ TigrInternal* _tigrInternalCocoa(id window) {
 
     Tigr* bmp = 0;
     object_getInstanceVariable(wdg, "tigrHandle", (void**)&bmp);
-    return bmp ? tigrInternal(bmp) : NULL;
+    return bmp ? tigrGetInternal(bmp) : NULL;
 }
 
 // we gonna construct objective-c class by hand in runtime, so wow, so hacker!
@@ -2763,7 +2763,7 @@ void windowDidResize(id self, SEL _sel, id notification) {
     TigrInternal* win;
     Tigr* bmp = 0;
     object_getInstanceVariable(self, "tigrHandle", (void**)&bmp);
-    win = bmp ? tigrInternal(bmp) : NULL;
+    win = bmp ? tigrGetInternal(bmp) : NULL;
     if (win) {
         win->mouseButtons = 0;
     }
@@ -2773,7 +2773,7 @@ void windowDidBecomeKey(id self, SEL _sel, id notification) {
     TigrInternal* win;
     Tigr* bmp = 0;
     object_getInstanceVariable(self, "tigrHandle", (void**)&bmp);
-    win = bmp ? tigrInternal(bmp) : NULL;
+    win = bmp ? tigrGetInternal(bmp) : NULL;
 
     if (win) {
         memset(win->keys, 0, 256);
@@ -2785,7 +2785,7 @@ void windowDidBecomeKey(id self, SEL _sel, id notification) {
 
 void mouseEntered(id self, SEL _sel, id event) {
     id window = objc_msgSend_id(event, sel("window"));
-    TigrInternal* win = _tigrInternalCocoa(window);
+    TigrInternal* win = _tigrGetInternalCocoa(window);
     if (win) {
         win->mouseInView = 1;
         if (win->flags & TIGR_NOCURSOR) {
@@ -2796,7 +2796,7 @@ void mouseEntered(id self, SEL _sel, id event) {
 
 void mouseExited(id self, SEL _sel, id event) {
     id window = objc_msgSend_id(event, sel("window"));
-    TigrInternal* win = _tigrInternalCocoa(window);
+    TigrInternal* win = _tigrGetInternalCocoa(window);
     if (win) {
         win->mouseInView = 0;
         if (win->flags & TIGR_NOCURSOR) {
@@ -3064,7 +3064,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
     }
 
     // Set up the Windows parts.
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     win->shown = 0;
     win->closed = 0;
     win->scale = bitmapScale;
@@ -3091,7 +3091,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
 
 void tigrFree(Tigr* bmp) {
     if (bmp->handle) {
-        TigrInternal* win = tigrInternal(bmp);
+        TigrInternal* win = tigrGetInternal(bmp);
         tigrGAPIDestroy(bmp);
 
         id window = (id)bmp->handle;
@@ -3444,7 +3444,7 @@ void _tigrOnCocoaEvent(id event, id window) {
     if (!event)
         return;
 
-    TigrInternal* win = _tigrInternalCocoa(window);
+    TigrInternal* win = _tigrGetInternalCocoa(window);
     if (!win)  // just pipe the event
     {
         objc_msgSend_void_id(NSApp, sel("sendEvent:"), event);
@@ -3562,7 +3562,7 @@ void tigrUpdate(Tigr* bmp) {
     TigrInternal* win;
     id openGLContext;
     id window;
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     window = (id)bmp->handle;
     openGLContext = (id)win->gl.glContext;
 
@@ -3621,7 +3621,7 @@ void tigrUpdate(Tigr* bmp) {
 }
 
 static int tigrGAPIBegin(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     objc_msgSend_void((id)win->gl.glContext, sel("makeCurrentContext"));
     return 0;
 }
@@ -3639,7 +3639,7 @@ int tigrClosed(Tigr* bmp) {
 void tigrMouse(Tigr* bmp, int* x, int* y, int* buttons) {
     TigrInternal* win;
     id window;
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     window = (id)bmp->handle;
 
     id windowContentView = objc_msgSend_id(window, sel("contentView"));
@@ -3689,19 +3689,19 @@ int tigrTouch(Tigr* bmp, TigrTouchPoint* points, int maxPoints) {
 int tigrKeyDown(Tigr* bmp, int key) {
     TigrInternal* win;
     assert(key < 256);
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     return (win->keys[key] != 0) && (win->prev[key] == 0);
 }
 
 int tigrKeyHeld(Tigr* bmp, int key) {
     TigrInternal* win;
     assert(key < 256);
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     return win->keys[key];
 }
 
 int tigrReadChar(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     int c = win->lastChar;
     win->lastChar = 0;
     return c;
@@ -4074,7 +4074,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
     scale = tigrEnforceScale(scale, flags);
     Tigr* bmp = tigrBitmapWithExtraMem(w, h, sizeof(TigrInternal));
     bmp->handle = (void*)4711;
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     win->shown = 0;
     win->closed = 0;
     win->scale = scale;
@@ -4122,7 +4122,7 @@ static int toWindowY(TigrInternal* win, int y) {
 }
 
 void tigrUpdate(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
 
     processEvents(win);
 
@@ -4172,7 +4172,7 @@ float tigrTime() {
 }
 
 void tigrMouse(Tigr* bmp, int* x, int* y, int* buttons) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     if (x) {
         *x = win->mouseX;
     }
@@ -4185,7 +4185,7 @@ void tigrMouse(Tigr* bmp, int* x, int* y, int* buttons) {
 }
 
 int tigrTouch(Tigr* bmp, TigrTouchPoint* points, int maxPoints) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     for (int i = 0; i < maxPoints && i < win->numTouchPoints; i++) {
         points[i] = win->touchPoints[i];
     }
@@ -4194,7 +4194,7 @@ int tigrTouch(Tigr* bmp, TigrTouchPoint* points, int maxPoints) {
 
 void tigrFree(Tigr* bmp) {
     if (bmp->handle) {
-        TigrInternal* win = tigrInternal(bmp);
+        TigrInternal* win = tigrGetInternal(bmp);
     }
     free(bmp->pix);
     free(bmp);
@@ -4213,7 +4213,7 @@ int tigrGAPIEnd(Tigr* bmp) {
 int tigrKeyDown(Tigr* bmp, int key) {
     TigrInternal* win;
     assert(key < 256);
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     return win->keys[key];
 }
 
@@ -4222,7 +4222,7 @@ int tigrKeyHeld(Tigr* bmp, int key) {
 }
 
 int tigrReadChar(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     int c = win->lastChar;
     win->lastChar = 0;
     return c;
@@ -4502,7 +4502,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
     bmp = tigrBitmapWithExtraMem(w, h, sizeof(TigrInternal));
     bmp->handle = (void*)xwin;
 
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     win->win = xwin;
     win->dpy = dpy;
     win->glc = glc;
@@ -4537,12 +4537,12 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
 }
 
 int tigrClosed(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     return win->win == 0;
 }
 
 int tigrGAPIBegin(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     return glXMakeCurrent(win->dpy, win->win, win->glc) ? 0 : -1;
 }
 
@@ -4554,19 +4554,19 @@ int tigrGAPIEnd(Tigr* bmp) {
 int tigrKeyDown(Tigr* bmp, int key) {
     TigrInternal* win;
     assert(key < 256);
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     return win->keys[key] && !win->prev[key];
 }
 
 int tigrKeyHeld(Tigr* bmp, int key) {
     TigrInternal* win;
     assert(key < 256);
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     return win->keys[key];
 }
 
 int tigrReadChar(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     int c = win->lastChar;
     win->lastChar = 0;
     return c;
@@ -4828,7 +4828,7 @@ static void tigrProcessInput(TigrInternal* win, int winWidth, int winHeight) {
 void tigrUpdate(Tigr* bmp) {
     XWindowAttributes gwa;
 
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
 
     memcpy(win->prev, win->keys, 256);
 
@@ -4849,7 +4849,7 @@ void tigrUpdate(Tigr* bmp) {
 
 void tigrFree(Tigr* bmp) {
     if (bmp->handle) {
-        TigrInternal* win = tigrInternal(bmp);
+        TigrInternal* win = tigrGetInternal(bmp);
         if (win->win) {
             glXMakeCurrent(win->dpy, None, NULL);
             glXDestroyContext(win->dpy, win->glc);
@@ -4889,7 +4889,7 @@ float tigrTime() {
 }
 
 void tigrMouse(Tigr* bmp, int* x, int* y, int* buttons) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     if (x) {
         *x = win->mouseX;
     }
@@ -5409,7 +5409,7 @@ static Tigr* refreshWindow(Tigr* bmp) {
         return 0;
     }
 
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
 
     int scale = 1;
     if (win->flags & TIGR_AUTO) {
@@ -5450,7 +5450,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
     Tigr* bmp = tigrBitmapWithExtraMem(w, h, sizeof(TigrInternal));
     bmp->handle = (void*)gState.window;
 
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     win->context = context;
 
     win->shown = 0;
@@ -5484,7 +5484,7 @@ Tigr* tigrWindow(int w, int h, const char* title, int flags) {
 }
 
 int tigrClosed(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     return win->closed;
 }
 
@@ -5492,7 +5492,7 @@ int tigrGAPIBegin(Tigr* bmp) {
     assert(gState.display != EGL_NO_DISPLAY);
     assert(gState.surface != EGL_NO_SURFACE);
 
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     if (eglMakeCurrent(gState.display, gState.surface, gState.surface, win->context) == EGL_FALSE) {
         return -1;
     }
@@ -5508,19 +5508,19 @@ int tigrGAPIEnd(Tigr* bmp) {
 int tigrKeyDown(Tigr* bmp, int key) {
     TigrInternal* win;
     assert(key < 256);
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     return win->keys[key] && !win->prev[key];
 }
 
 int tigrKeyHeld(Tigr* bmp, int key) {
     TigrInternal* win;
     assert(key < 256);
-    win = tigrInternal(bmp);
+    win = tigrGetInternal(bmp);
     return win->keys[key];
 }
 
 int tigrReadChar(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     int c = win->lastChar;
     win->lastChar = 0;
     return c;
@@ -5541,7 +5541,7 @@ static int toWindowY(TigrInternal* win, int y) {
 }
 
 void tigrUpdate(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     memcpy(win->prev, win->keys, 256);
     for (int i = 0; i < 256; i++) {
         win->keys[i] ^= win->released[i];
@@ -5591,7 +5591,7 @@ void tigrUpdate(Tigr* bmp) {
 
 void tigrFree(Tigr* bmp) {
     if (bmp->handle) {
-        TigrInternal* win = tigrInternal(bmp);
+        TigrInternal* win = tigrGetInternal(bmp);
 
         eglMakeCurrent(gState.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (win->context != EGL_NO_CONTEXT) {
@@ -5634,7 +5634,7 @@ float tigrTime() {
 }
 
 void tigrMouse(Tigr* bmp, int* x, int* y, int* buttons) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     if (x) {
         *x = win->mouseX;
     }
@@ -5647,7 +5647,7 @@ void tigrMouse(Tigr* bmp, int* x, int* y, int* buttons) {
 }
 
 int tigrTouch(Tigr* bmp, TigrTouchPoint* points, int maxPoints) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     for (int i = 0; i < maxPoints && i < win->numTouchPoints; i++) {
         points[i] = win->touchPoints[i];
     }
@@ -5785,7 +5785,7 @@ PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 PFNGLACTIVETEXTUREPROC glActiveTexture;
 int tigrGL11Init(Tigr* bmp) {
     int pixel_format;
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     GLStuff* gl = &win->gl;
     PIXELFORMATDESCRIPTOR pfd = { sizeof(PIXELFORMATDESCRIPTOR),
                                   1,
@@ -5839,7 +5839,7 @@ int tigrGL11Init(Tigr* bmp) {
 int tigrGL33Init(Tigr* bmp) {
     int pixel_format;
     UINT num_formats;
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     GLStuff* gl = &win->gl;
 
     wglChoosePixelFormat = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
@@ -5972,7 +5972,7 @@ void tigrCreateShaderProgram(GLStuff* gl, const char* fxSource, int fxSize) {
 }
 
 static void tigrGAPICreate(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     GLStuff* gl = &win->gl;
     GLuint VBO;
     GLfloat vertices[] = { // pos      uv
@@ -6019,7 +6019,7 @@ static void tigrGAPICreate(Tigr* bmp) {
 }
 
 static void tigrGAPIDestroy(Tigr* bmp) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     GLStuff* gl = &win->gl;
 
     if (tigrGAPIBegin(bmp) < 0) {
@@ -6073,7 +6073,7 @@ void tigrGAPIDraw(int legacy, GLuint uniform_model, GLuint tex, Tigr* bmp, int x
 }
 
 static void tigrGAPIPresent(Tigr* bmp, int w, int h) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     GLStuff* gl = &win->gl;
 
     glViewport(0, 0, w, h);
@@ -6236,7 +6236,7 @@ char* tigrEncodeUTF8(char* text, int cp) {
 
 int tigrBeginOpenGL(Tigr* bmp) {
 #ifdef TIGR_GAPI_GL
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     win->gl.gl_user_opengl_rendering = 1;
     return tigrGAPIBegin(bmp) == 0;
 #else
@@ -6247,7 +6247,7 @@ int tigrBeginOpenGL(Tigr* bmp) {
 void tigrSetPostShader(Tigr* bmp, const char* code, int size) {
 #ifdef TIGR_GAPI_GL
     tigrGAPIBegin(bmp);
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     GLStuff* gl = &win->gl;
     tigrCreateShaderProgram(gl, code, size);
     tigrGAPIEnd(bmp);
@@ -6255,7 +6255,7 @@ void tigrSetPostShader(Tigr* bmp, const char* code, int size) {
 }
 
 void tigrSetPostFX(Tigr* bmp, float p1, float p2, float p3, float p4) {
-    TigrInternal* win = tigrInternal(bmp);
+    TigrInternal* win = tigrGetInternal(bmp);
     win->p1 = p1;
     win->p2 = p2;
     win->p3 = p3;
