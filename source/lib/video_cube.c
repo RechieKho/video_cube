@@ -615,14 +615,14 @@ typedef struct {
     const unsigned char *p, *end;
 } PNG;
 
-static unsigned get32(const unsigned char* v) {
+static unsigned packCharsToUint32(const unsigned char* v) {
     return (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3];
 }
 
 static const unsigned char* find(PNG* png, const char* chunk, unsigned minlen) {
     const unsigned char* start;
     while (png->p < png->end) {
-        unsigned len = get32(png->p + 0);
+        unsigned len = packCharsToUint32(png->p + 0);
         start = png->p;
         png->p += len + 12;
         if (memcmp(start + 4, chunk, 4) == 0 && len >= minlen && png->p <= png->end)
@@ -814,7 +814,7 @@ static Tigr* tigrLoadPng(PNG* png) {
     }
 
     // Allocate bitmap (+1 width to save room for stupid PNG filter bytes)
-    bmp = tigrBitmap(get32(ihdr + 0) + 1, get32(ihdr + 4));
+    bmp = tigrBitmap(packCharsToUint32(ihdr + 0) + 1, packCharsToUint32(ihdr + 4));
     CHECK(bmp);
     bmp->w--;
 
@@ -824,7 +824,7 @@ static Tigr* tigrLoadPng(PNG* png) {
 
     // Join IDAT chunks.
     for (idat = find(png, "IDAT", 0); idat; idat = find(png, "IDAT", 0)) {
-        unsigned len = get32(idat - 8);
+        unsigned len = packCharsToUint32(idat - 8);
         data = (unsigned char*)realloc(data, datalen + len);
         if (!data)
             break;
@@ -841,7 +841,7 @@ static Tigr* tigrLoadPng(PNG* png) {
     png->p = first;
     trns = find(png, "tRNS", 0);
     if (trns) {
-        trnsSize = get32(trns - 8);
+        trnsSize = packCharsToUint32(trns - 8);
     }
 
     CHECK(data && datalen >= 6);
@@ -1762,7 +1762,7 @@ void tigrFreeFont(TigrFont* font) {
     free(font);
 }
 
-static TigrGlyph* get(TigrFont* font, int code) {
+static TigrGlyph* getGlyph(TigrFont* font, int code) {
     unsigned lo = 0, hi = font->numGlyphs;
     while (lo < hi) {
         unsigned guess = (lo + hi) / 2;
@@ -1812,7 +1812,7 @@ void tigrPrint(Tigr* dest, TigrFont* font, int x, int y, TPixel color, const cha
             y += tigrTextHeight(font, "");
             continue;
         }
-        g = get(font, c);
+        g = getGlyph(font, c);
         tigrBlitTint(dest, font->bitmap, x, y, g->x, g->y, g->w, g->h, color);
         x += g->w;
     }
@@ -1827,7 +1827,7 @@ int tigrTextWidth(TigrFont* font, const char* text) {
         if (c == '\n' || c == '\r') {
             x = 0;
         } else {
-            x += get(font, c)->w;
+            x += getGlyph(font, c)->w;
             w = (x > w) ? x : w;
         }
     }
@@ -1838,7 +1838,7 @@ int tigrTextHeight(TigrFont* font, const char* text) {
     int rowh, h, c;
     tigrSetupFont(font);
 
-    h = rowh = get(font, 0)->h;
+    h = rowh = getGlyph(font, 0)->h;
     while (*text) {
         text = tigrDecodeUTF8(text, &c);
         if (c == '\n' && *text)
